@@ -35,9 +35,7 @@ Dự án tuân thủ nghiêm ngặt nguyên lý **Single Responsibility (Đơn t
 
 ## ⚙️ Hướng dẫn cài đặt (Installation)
 
-1. Clone dự án về máy tính:
-   ```bash
-  git clone https://github.com/Chuongpham2004/Project_LMS_System.git
+1. Clone dự án về máy tính: git clone https://github.com/Chuongpham2004/Project_LMS_System.git
 2. Mở PostgreSQL (hoặc pgAdmin) và chạy file script database.sql để khởi tạo cấu trúc 3 bảng (student, course, enrollment).
 3. Đảm bảo đã nhúng thư viện jbcrypt-0.4.jar và postgresql-driver.jar vào cấu hình Project Structure.
 4. Cập nhật thông tin kết nối Database tại utils/DBUtil.java (username, password, port)
