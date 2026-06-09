@@ -1,5 +1,6 @@
 package entity;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Date;
 
@@ -14,13 +15,13 @@ public class Student {
     private String role;
     private String password;
     private Date createAt;
+    private boolean isDeleted;
+    private Timestamp deletedAt;
 
-    // Constructor rỗng
     public Student() {
     }
 
-    // Constructor đầy đủ tham số
-    public Student(int id, String name, Date dob, String email, int sex, String phone, String role, String password, Date createAt) {
+    public Student(int id, String name, Date dob, String email, int sex, String phone, String role, String password, Date createAt, boolean isDeleted, Timestamp deletedAt) {
         this.id = id;
         this.name = name;
         this.dob = dob;
@@ -30,6 +31,8 @@ public class Student {
         this.role = role;
         this.password = password;
         this.createAt = createAt;
+        this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt;
     }
 
     public int getId() {
@@ -104,18 +107,19 @@ public class Student {
         this.createAt = createAt;
     }
 
-    @Override
-    public String toString() {
-        return "Student{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", dob=" + dob +
-                ", email='" + email + '\'' +
-                ", sex=" + sex +
-                ", phone='" + phone + '\'' +
-                ", role='" + role + '\'' +
-                ", password='" + password + '\'' +
-                ", createAt=" + createAt +
-                '}';
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public Timestamp getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Timestamp deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

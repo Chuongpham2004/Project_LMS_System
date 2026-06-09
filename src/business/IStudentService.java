@@ -1,0 +1,23 @@
+package business;
+
+import entity.Student;
+
+import java.util.List;
+
+public interface IStudentService {
+    List<Student> getAllStudents();
+
+    Student getStudentById(int id);
+
+    void addStudent(Student student) throws Exception;
+
+    void updateStudent(Student student) throws Exception;
+
+    void deleteStudent(int id) throws Exception;
+
+    // Hàm Omni-search 3 trong 1
+    List<Student> searchStudents(String keyword);
+
+    // Hàm sắp xếp
+    List<Student> sortStudents(String type, boolean isAscending);
+}

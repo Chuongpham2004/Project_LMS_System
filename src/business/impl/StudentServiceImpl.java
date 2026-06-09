@@ -1,0 +1,150 @@
+package business.impl;
+
+import business.IStudentService;
+import dao.IEnrollmentDAO;
+import dao.IStudentDAO;
+import dao.impl.EnrollmentDAOImpl;
+import dao.impl.StudentDAOImpl;
+import entity.Student;
+import org.mindrot.jbcrypt.BCrypt;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class StudentServiceImpl implements IStudentService {
+
+    private final IStudentDAO studentDAO = new StudentDAOImpl();
+    private final IEnrollmentDAO enrollmentDAO = new EnrollmentDAOImpl();
+
+    @Override
+    public List<Student> getAllStudents() {
+        return studentDAO.findAll();
+    }
+
+    @Override
+    public Student getStudentById(int id) {
+        return studentDAO.findById(id);
+    }
+
+    @Override
+    public void addStudent(Student student) throws Exception {
+        // 1. Validate định dạng dữ liệu
+        validateStudentInfo(student, true);
+
+        // 2. Băm mật khẩu trước khi lưu xuống DB
+        String hashedPassword = BCrypt.hashpw(student.getPassword(), BCrypt.gensalt(10));
+        student.setPassword(hashedPassword);
+
+        // 3. Gọi DAO thêm mới
+        if (!studentDAO.insert(student)) {
+            throw new Exception("❌ Thêm học viên thất bại do lỗi hệ thống!");
+        }
+    }
+
+    @Override
+    public void updateStudent(Student student) throws Exception {
+        // Kiểm tra xem ID có tồn tại không
+        Student existing = studentDAO.findById(student.getId());
+        if (existing == null) {
+            throw new Exception("❌ Lỗi: Không tìm thấy học viên với ID này!");
+        }
+
+        // Validate thông tin (truyền false vì lúc update không bắt nhập mật khẩu)
+        validateStudentInfo(student, false);
+
+        if (!studentDAO.update(student)) {
+            throw new Exception("❌ Cập nhật thông tin thất bại!");
+        }
+    }
+
+    @Override
+    public void deleteStudent(int id) throws Exception {
+        // 1. Kiểm tra tồn tại: ID có hợp lệ không và học viên này đã bị xóa mềm trước đó chưa?
+        Student existingStudent = studentDAO.findById(id);
+        if (existingStudent == null) {
+            throw new Exception("❌ Lỗi: Không tìm thấy học viên với ID này, hoặc học viên đã bị xóa khỏi hệ thống!");
+        }
+
+        // 2. Kiểm tra nghiệp vụ (Business Rule): Học viên có đơn đăng ký không?
+        boolean hasEnrollment = enrollmentDAO.hasEnrollmentByStudentId(id);
+        if (hasEnrollment) {
+            throw new Exception("❌ Từ chối xóa: Học viên này đang có đơn đăng ký khóa học. Bạn phải xóa đơn đăng ký trong [Quản lý Đăng ký] trước khi xóa tài khoản!");
+        }
+
+        // 3. Thực thi Soft Delete qua DAO
+        if (!studentDAO.delete(id)) {
+            throw new Exception("❌ Xóa học viên thất bại do lỗi hệ thống cơ sở dữ liệu!");
+        }
+    }
+
+    // ================= XỬ LÝ STREAM API =================
+
+    @Override
+    public List<Student> searchStudents(String keyword) {
+        String lowerKeyword = keyword.toLowerCase().trim();
+
+        // Kéo toàn bộ danh sách, dùng Stream filter trên 3 trường cùng lúc
+        return studentDAO.findAll().stream()
+                .filter(s ->
+                        // 1. Khớp Tên
+                        s.getName().toLowerCase().contains(lowerKeyword) ||
+                                // 2. Hoặc khớp Email
+                                s.getEmail().toLowerCase().contains(lowerKeyword) ||
+                                // 3. Hoặc khớp ID (Ép kiểu ID thành chuỗi để dùng hàm contains)
+                                String.valueOf(s.getId()).contains(lowerKeyword)
+                )
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Student> sortStudents(String type, boolean isAscending) {
+        List<Student> list = studentDAO.findAll();
+        Comparator<Student> comparator;
+
+        if ("NAME".equalsIgnoreCase(type)) {
+            comparator = Comparator.comparing(Student::getName);
+        } else {
+            comparator = Comparator.comparing(Student::getId);
+        }
+
+        if (!isAscending) {
+            comparator = comparator.reversed();
+        }
+
+        return list.stream().sorted(comparator).collect(Collectors.toList());
+    }
+
+    // ================= HÀM VALIDATE CHUNG =================
+
+    private void validateStudentInfo(Student student, boolean isNew) throws Exception {
+        if (student.getName() == null || student.getName().trim().isEmpty()) {
+            throw new Exception("❌ Tên học viên không được để trống!");
+        }
+
+        if (student.getEmail() == null || !student.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new Exception("❌ Định dạng Email không hợp lệ!");
+        }
+
+        // CHỐNG TRÙNG EMAIL: Gọi DAO để check
+        Student existingEmail = studentDAO.findByEmail(student.getEmail());
+        if (existingEmail != null) {
+            // Nếu là Thêm mới -> Cứ có existingEmail là lỗi
+            // Nếu là Cập nhật -> Có existingEmail nhưng ID khác với ID người đang sửa thì mới là lỗi
+            if (isNew || existingEmail.getId() != student.getId()) {
+                throw new Exception("❌ Lỗi: Email này đã được sử dụng trong hệ thống!");
+            }
+        }
+
+        if (student.getPhone() == null || !student.getPhone().matches("^[0-9]{10,11}$")) {
+            throw new Exception("❌ Số điện thoại phải gồm 10-11 chữ số!");
+        }
+
+        if (isNew) { // Chỉ kiểm tra mật khẩu khi tạo mới
+            String passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!]).{8,}$";
+            if (student.getPassword() == null || !student.getPassword().matches(passwordRegex)) {
+                throw new Exception("❌ Lỗi Bảo Mật: Mật khẩu phải từ 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@#$%^&+=!)");
+            }
+        }
+    }
+}

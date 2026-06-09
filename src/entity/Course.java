@@ -1,6 +1,7 @@
 package entity;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 public class Course {
     private int id;
@@ -8,16 +9,20 @@ public class Course {
     private int duration;
     private String instructor;
     private Date createAt;
+    private boolean isDeleted;
+    private Timestamp deletedAt;
 
     public Course() {
     }
 
-    public Course(int id, String name, int duration, String instructor, Date createAt) {
+    public Course(int id, String name, int duration, String instructor, Date createAt, boolean isDeleted, Timestamp deletedAt) {
         this.id = id;
         this.name = name;
         this.duration = duration;
         this.instructor = instructor;
         this.createAt = createAt;
+        this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt;
     }
 
     public int getId() {
@@ -58,5 +63,21 @@ public class Course {
 
     public void setCreateAt(Date createAt) {
         this.createAt = createAt;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public Timestamp getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Timestamp deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

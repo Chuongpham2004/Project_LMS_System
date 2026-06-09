@@ -7,7 +7,7 @@ import entity.Student;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class UserServiceImpl implements IUserService {
-    private IUserDAO userDAO = new UserDAOImpl();
+    private final IUserDAO userDAO = new UserDAOImpl();
 
     @Override
     public Student login(String email, String rawPassword) {
