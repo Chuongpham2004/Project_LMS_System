@@ -20,4 +20,8 @@ public interface IStudentService {
 
     // Hàm sắp xếp
     List<Student> sortStudents(String type, boolean isAscending);
+
+    void changePassword(int studentId, String oldPassword, String newPassword) throws Exception;
+
+    boolean checkCurrentPassword(int studentId, String rawPassword);
 }

@@ -197,6 +197,28 @@ public class StudentDAOImpl implements IStudentDAO {
         return deletedList;
     }
 
+    @Override
+    public boolean updatePassword(int id, String newHashedPassword) {
+        String sql = "UPDATE student SET password = ? WHERE id = ?";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            conn = utils.DBUtil.getConnection();
+            if (conn != null) {
+                pstmt = conn.prepareStatement(sql);
+                pstmt.setString(1, newHashedPassword);
+                pstmt.setInt(2, id);
+                return pstmt.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi cập nhật mật khẩu Database: " + e.getMessage());
+        } finally {
+            utils.DBUtil.closeResources(conn, pstmt, null);
+        }
+        return false;
+    }
+
     private Student mapResultSetToStudent(ResultSet rs) throws Exception {
         Student student = new Student();
         student.setId(rs.getInt("id"));

@@ -41,8 +41,8 @@ public class AuthView {
             } else {
                 System.out.println("👉 Chuyển hướng tới Menu Học viên (Student)...");
                 // TODO: Gọi StudentView ở đây trong Buổi 4
-                // StudentView studentView = new StudentView(user);
-                // studentView.showMenu(scanner);
+                 StudentView studentView = new StudentView(user);
+                 studentView.showMenu(scanner);
             }
         } else {
             System.out.println("❌ Tài khoản hoặc mật khẩu không chính xác. Vui lòng thử lại!");

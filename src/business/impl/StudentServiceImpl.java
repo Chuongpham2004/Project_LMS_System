@@ -78,6 +78,32 @@ public class StudentServiceImpl implements IStudentService {
         }
     }
 
+    @Override
+    public boolean checkCurrentPassword(int studentId, String rawPassword) {
+        try {
+            Student student = studentDAO.findById(studentId);
+            if (student == null) return false;
+            // So khớp mật khẩu người dùng gõ với mật khẩu băm trong DB
+            return org.mindrot.jbcrypt.BCrypt.checkpw(rawPassword, student.getPassword());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void changePassword(int studentId, String oldPassword, String newPassword) throws Exception {
+        // 1. Không cần gọi BCrypt.checkpw kiểm tra pass cũ ở đây nữa!
+        // Vì tầng View đã gọi checkCurrentPassword và chặn đứng từ vòng gửi xe rồi.
+
+        // 2. Chỉ tập trung băm mật khẩu mới
+        String hashedNewPassword = BCrypt.hashpw(newPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
+
+        // 3. Gọi DAO chuyên dụng để nhét mật khẩu mới vào DB
+        if (!studentDAO.updatePassword(studentId, hashedNewPassword)) {
+            throw new Exception("❌ Lỗi hệ thống: Không thể lưu mật khẩu mới vào cơ sở dữ liệu!");
+        }
+    }
+
     // ================= XỬ LÝ STREAM API =================
 
     @Override

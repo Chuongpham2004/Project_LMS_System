@@ -16,4 +16,6 @@ public interface IStudentDAO {
     boolean update(Student student);
 
     boolean delete(int id);
+
+    boolean updatePassword(int id, String newHashedPassword);
 }

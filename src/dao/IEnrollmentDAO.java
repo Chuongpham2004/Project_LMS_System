@@ -12,4 +12,12 @@ public interface IEnrollmentDAO {
     boolean deleteEnrollment(int enrollmentId);
 
     boolean hasEnrollmentByStudentId(int studentId);
+
+    boolean isEnrolled(int studentId, int courseId);
+
+    boolean insertEnrollment(int studentId, int courseId);
+
+    List<EnrollmentDetail> getEnrollmentsByStudentId(int studentId);
+
+    String getStatusByEnrollmentAndStudent(int enrollmentId, int studentId);
 }

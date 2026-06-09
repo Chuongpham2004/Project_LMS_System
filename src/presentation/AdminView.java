@@ -5,6 +5,7 @@ import business.impl.EnrollmentServiceImpl;
 import business.impl.StudentServiceImpl;
 import dao.impl.StatisticDAO;
 import entity.Course;
+import entity.CourseStatDTO;
 import entity.EnrollmentDetail;
 import entity.Student;
 import java.util.List;
@@ -223,11 +224,11 @@ public class AdminView {
         }
 
     // Hàm in bảng chung cho các báo cáo
-    private void displayStatTable(List<entity.CourseStatDTO> stats) {
+    private void displayStatTable(List<CourseStatDTO> stats) {
         System.out.println("+------------------------------------------+------------------+");
         System.out.printf("| %-40s | %-16s |\n", "Tên khóa học", "Số lượng Học viên");
         System.out.println("+------------------------------------------+------------------+");
-        for (entity.CourseStatDTO stat : stats) {
+        for (CourseStatDTO stat : stats) {
             System.out.printf("| %-40s | %-16d |\n", stat.getCourseName(), stat.getStudentCount());
         }
         System.out.println("+------------------------------------------+------------------+");
