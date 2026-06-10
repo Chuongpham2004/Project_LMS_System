@@ -1,15 +1,33 @@
 package utils;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class DBUtil {
-    private static final String URL = "jdbc:postgresql://localhost:5432/student_course_db";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "200426";
+    private static String URL;
+    private static String USER;
+    private static String PASSWORD;
+
+    // Khối static này sẽ chạy ngay khi class DBUtil được gọi lần đầu tiên
+    static {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("database.properties")) {
+            properties.load(fis);
+            URL = properties.getProperty("db.url");
+            USER = properties.getProperty("db.user");
+            PASSWORD = properties.getProperty("db.password");
+        } catch (IOException e) {
+            System.err.println("❌ Lỗi: Không tìm thấy file database.properties hoặc không thể đọc file!");
+            System.err.println("💡 Mẹo: Hãy copy file database.properties.example thành database.properties và cấu hình lại.");
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Khởi tạo và trả về một Connection tới PostgreSQL.
@@ -26,7 +44,7 @@ public class DBUtil {
     }
 
     /**
-     * Hàm dùng để test kết nối ngay khi khởi động Main.java (Buổi 1)
+     * Hàm dùng để test kết nối ngay khi khởi động Main.java
      */
     public static void testConnection() {
         System.out.println("Đang kiểm tra kết nối cơ sở dữ liệu...");
@@ -34,7 +52,7 @@ public class DBUtil {
             if (conn != null && !conn.isClosed()) {
                 System.out.println("✅ Kết nối PostgreSQL thành công!");
             } else {
-                System.err.println("❌ Kết nối thất bại. Vui lòng kiểm tra lại URL, USER hoặc PASSWORD.");
+                System.err.println("❌ Kết nối thất bại. Vui lòng kiểm tra lại cấu hình trong file database.properties.");
             }
         } catch (SQLException e) {
             System.err.println("❌ Xảy ra lỗi trong quá trình kiểm tra kết nối: " + e.getMessage());
@@ -42,7 +60,7 @@ public class DBUtil {
     }
 
     /**
-     * Tiện ích đóng các tài nguyên JDBC để tránh rò rỉ bộ nhớ (Memory Leak)
+     * Tiện ích đóng các tài nguyên JDBC
      */
     public static void closeResources(Connection conn, PreparedStatement pstmt, ResultSet rs) {
         try {

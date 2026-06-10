@@ -55,10 +55,10 @@ public class StudentView {
                         enrollCourse(scanner);
                         break;
                     case "3":
-                         showMyEnrollments(scanner);
+                        showMyEnrollments(scanner);
                         break;
                     case "4":
-                         cancelEnrollment(scanner);
+                        cancelEnrollment(scanner);
                         break;
                     case "5":
                         showProfile();
@@ -102,9 +102,34 @@ public class StudentView {
                 if (choice.equals("1")) {
                     displayCourseTable(courseService.getAllCourses());
                 } else if (choice.equals("2")) {
-                    System.out.print("🔍 Nhập từ khóa tên khóa học: ");
-                    String keyword = scanner.nextLine().trim();
-                    displayCourseTable(courseService.searchByName(keyword));
+
+                    // LỚP PHÒNG THỦ: Chặn chuỗi rỗng và ép nhập đúng từ khóa
+                    while (true) {
+                        System.out.print("🔍 Nhập từ khóa tên khóa học (Hoặc gõ '0' để Hủy): ");
+                        String keyword = scanner.nextLine().trim();
+
+                        if (keyword.equals("0")) {
+                            System.out.println("ℹ️ Đã hủy thao tác tìm kiếm.");
+                            break; // Thoát vòng lặp nhập từ khóa, quay lại menu danh sách
+                        }
+
+                        if (keyword.isEmpty()) {
+                            System.out.println("❌ Lỗi: Từ khóa tìm kiếm không được để trống! Vui lòng nhập lại.");
+                            continue; // Bắt nhập lại
+                        }
+
+                        // (Tùy chọn) Bỏ comment đoạn này nếu bạn muốn ép nhập ít nhất 2 ký tự
+
+                        if (keyword.length() < 2) {
+                            System.out.println("❌ Lỗi: Vui lòng nhập ít nhất 2 ký tự để tìm kiếm hiệu quả hơn!");
+                            continue;
+                        }
+
+                        // Nếu từ khóa hợp lệ thì gọi Service và in bảng
+                        displayCourseTable(courseService.searchByName(keyword));
+                        break; // Thoát vòng lặp sau khi tìm kiếm thành công
+                    }
+
                 } else {
                     System.out.println("❌ Lựa chọn không hợp lệ!");
                 }
@@ -165,7 +190,7 @@ public class StudentView {
     /**
      * TÍNH NĂNG 3: XEM VÀ SẮP XẾP KHÓA HỌC ĐÃ ĐĂNG KÝ
      */
-    private void showMyEnrollments(Scanner scanner) {
+    private void  showMyEnrollments(Scanner scanner) {
         // 1. Kéo toàn bộ lịch sử học tập của sinh viên này lên
         List<EnrollmentDetail> myEnrollments = enrollmentService.getMyEnrollments(loggedInStudent.getId());
 

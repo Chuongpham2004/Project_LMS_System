@@ -27,11 +27,15 @@ public class Main {
                     try {
                         authView.showLogin(scanner);
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        System.out.println("❌ Lỗi hệ thống: Quá trình đăng nhập gặp sự cố. Vui lòng thử lại!");
                     }
                     break;
                 case "2":
-                    authView.showRegister(scanner);
+                    try {
+                        authView.showRegister(scanner);
+                    } catch (Exception e) {
+                        System.out.println("❌ Lỗi hệ thống: Quá trình đăng ký gặp sự cố. Vui lòng thử lại!");
+                    }
                     break;
                 case "3":
                     System.out.println("👋 Cảm ơn bạn đã sử dụng hệ thống. Hẹn gặp lại!");

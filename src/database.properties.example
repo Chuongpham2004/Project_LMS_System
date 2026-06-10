@@ -1,0 +1,4 @@
+# File mẫu cấu hình DB - Hãy copy ra một file tên là 'database.properties' và điền thông tin thật của bạn vào
+db.url=jdbc:postgresql://localhost:5432/ten_database
+db.user=ten_dang_nhap
+db.password=mat_khau_cua_ban

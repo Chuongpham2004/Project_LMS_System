@@ -13,43 +13,69 @@ public class AuthView {
     private final IUserService userService = new UserServiceImpl();
 
     public void showLogin(Scanner scanner) throws Exception {
-        System.out.println("\n--- 🔐 ĐĂNG NHẬP HỆ THỐNG ---");
-        System.out.print("Nhập email: ");
-        String email = scanner.nextLine().trim();
+        // Bọc toàn bộ luồng đăng nhập vào một vòng lặp lớn
+        while (true) {
+            System.out.println("\n--- 🔐 ĐĂNG NHẬP HỆ THỐNG ---");
+            String email = "";
+            String password = "";
 
-        System.out.print("Nhập mật khẩu: ");
-        String password = scanner.nextLine().trim();
+            // LỚP PHÒNG THỦ 1: Ép nhập Email không được để trống (Thêm phím 0 để thoát)
+            while (true) {
+                System.out.print("Nhập email (hoặc gõ '0' để quay lại Menu chính): ");
+                email = scanner.nextLine().trim();
 
-        // Validate cơ bản tại View
-        if (email.isEmpty() || password.isEmpty()) {
-            System.out.println("❌ Lỗi: Không được để trống thông tin đăng nhập!");
-            return;
-        }
+                if (email.equals("0")) {
+                    System.out.println("ℹ️ Đã hủy đăng nhập.");
+                    return; // Thoát hoàn toàn khỏi hàm showLogin, quay về Main Menu
+                }
 
-        // Gọi Business để xác thực
-        Student user = userService.login(email, password);
-
-        if (user != null) {
-            System.out.println("✅ Đăng nhập thành công! Xin chào " + user.getName());
-
-            // Điều hướng menu dựa theo Role (Phân quyền)
-            if ("ADMIN".equals(user.getRole())) {
-                System.out.println("👉 Chuyển hướng tới Menu Quản trị viên (Admin)...");
-                AdminView adminView = new AdminView();
-                adminView.showMenu(scanner);
-
-            } else {
-                System.out.println("👉 Chuyển hướng tới Menu Học viên (Student)...");
-                // TODO: Gọi StudentView ở đây trong Buổi 4
-                 StudentView studentView = new StudentView(user);
-                 studentView.showMenu(scanner);
+                if (email.isEmpty()) {
+                    System.out.println("❌ Lỗi: Email không được để trống! Vui lòng nhập lại.");
+                } else {
+                    break; // Nhập hợp lệ thì thoát vòng lặp nhỏ
+                }
             }
-        } else {
-            System.out.println("❌ Tài khoản hoặc mật khẩu không chính xác. Vui lòng thử lại!");
+
+            // LỚP PHÒNG THỦ 2: Ép nhập Mật khẩu không được để trống
+            while (true) {
+                System.out.print("Nhập mật khẩu: ");
+                password = scanner.nextLine().trim();
+                if (password.isEmpty()) {
+                    System.out.println("❌ Lỗi: Mật khẩu không được để trống! Vui lòng nhập lại.");
+                } else {
+                    break; // Nhập hợp lệ thì thoát vòng lặp nhỏ
+                }
+            }
+
+            // Gọi Business để xác thực
+            Student user = userService.login(email, password);
+
+            if (user != null) {
+                System.out.println("✅ Đăng nhập thành công! Xin chào " + user.getName());
+
+                // Điều hướng menu dựa theo Role (Phân quyền)
+                if ("ADMIN".equals(user.getRole())) {
+                    System.out.println("👉 Chuyển hướng tới Menu Quản trị viên (Admin)...");
+                    AdminView adminView = new AdminView();
+                    adminView.showMenu(scanner);
+
+                } else {
+                    System.out.println("👉 Chuyển hướng tới Menu Học viên (Student)...");
+                    StudentView studentView = new StudentView(user);
+                    studentView.showMenu(scanner);
+                }
+
+                // Trả về luồng điều khiển sau khi người dùng Đăng xuất khỏi AdminView/StudentView
+                return;
+            } else {
+                // Đăng nhập thất bại: Báo lỗi và vòng lặp while(true) lớn sẽ tự động quay lại bắt nhập Email
+                System.out.println("❌ Tài khoản hoặc mật khẩu không chính xác. Vui lòng thử lại!");
+                System.out.println("-------------------------------------------");
+            }
         }
     }
 
-    public void showRegister(Scanner scanner) {
+    public void showRegister(Scanner scanner) throws Exception {
         System.out.println("\n--- 📝 ĐĂNG KÝ TÀI KHOẢN ---");
         Student newStudent = new Student();
 

@@ -84,7 +84,7 @@ public class StudentServiceImpl implements IStudentService {
             Student student = studentDAO.findById(studentId);
             if (student == null) return false;
             // So khớp mật khẩu người dùng gõ với mật khẩu băm trong DB
-            return org.mindrot.jbcrypt.BCrypt.checkpw(rawPassword, student.getPassword());
+            return BCrypt.checkpw(rawPassword, student.getPassword());
         } catch (Exception e) {
             return false;
         }
