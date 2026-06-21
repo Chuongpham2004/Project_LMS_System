@@ -20,4 +20,8 @@ public interface IEnrollmentDAO {
     List<EnrollmentDetail> getEnrollmentsByStudentId(int studentId);
 
     String getStatusByEnrollmentAndStudent(int enrollmentId, int studentId);
+
+    int getTotalEnrollmentsCount() throws Exception;
+
+    List<EnrollmentDetail> getEnrollmentsByPage(int page, int pageSize) throws Exception;
 }

@@ -11,12 +11,24 @@ import java.util.List;
 public class CourseServiceImpl implements ICourseService {
     private final ICourseDAO courseDAO = new CourseDAOImpl();
 
+    // Khởi tạo dịch vụ ghi nhật ký hệ thống ngầm
+    private final AuditLogServiceImpl auditLogService = new AuditLogServiceImpl();
+
     @Override
     public void addCourse(Course course) throws Exception {
         validateCourseInfo(course);
         // Nếu qua ải validate, gọi DAO để lưu xuống DB
         boolean isSuccess = courseDAO.insert(course);
         if (!isSuccess) throw new Exception("❌ Thêm khóa học thất bại từ hệ thống!");
+
+        // [NHÚNG AUDIT LOG]: Ghi nhận hành động thêm mới
+        auditLogService.log(
+                "Admin",
+                "INSERT",
+                "course",
+                course.getId(),
+                "Thêm mới khóa học thành công: " + course.getName() + " (" + course.getDuration() + " giờ, GV: " + course.getInstructor() + ")"
+        );
     }
 
     @Override
@@ -28,6 +40,14 @@ public class CourseServiceImpl implements ICourseService {
         validateCourseInfo(course);
         boolean isSuccess = courseDAO.update(course);
         if (!isSuccess) throw new Exception("❌ Cập nhật khóa học thất bại từ hệ thống!");
+
+        // [NHÚNG AUDIT LOG]: Đối chiếu chi tiết dữ liệu cũ -> dữ liệu mới (Rất chuẩn Enterprise)
+        String details = String.format("Cập nhật khóa học ID %d. [Cũ] Tên: %s, Giờ: %d, GV: %s -> [Mới] Tên: %s, Giờ: %d, GV: %s",
+                course.getId(),
+                existingCourse.getName(), existingCourse.getDuration(), existingCourse.getInstructor(),
+                course.getName(), course.getDuration(), course.getInstructor());
+
+        auditLogService.log("Admin", "UPDATE", "course", course.getId(), details);
     }
 
     @Override
@@ -38,6 +58,15 @@ public class CourseServiceImpl implements ICourseService {
         }
         boolean isSuccess = courseDAO.delete(id);
         if (!isSuccess) throw new Exception("❌ Xóa khóa học thất bại từ hệ thống!");
+
+        // [NHÚNG AUDIT LOG]: Ghi lại thông tin khóa học trước khi bị xóa khỏi màn hình hiển thị
+        auditLogService.log(
+                "Admin",
+                "DELETE",
+                "course",
+                id,
+                "Xóa khóa học hệ thống: " + existing.getName() + " (Giảng viên phụ trách: " + existing.getInstructor() + ")"
+        );
     }
 
     @Override
@@ -53,7 +82,7 @@ public class CourseServiceImpl implements ICourseService {
     @Override
     public List<Course> searchByName(String keyword) throws Exception {
         return courseDAO.findAll().stream()
-                .filter(c->c.getName().toLowerCase().contains(keyword.toLowerCase()))
+                .filter(c -> c.getName().toLowerCase().contains(keyword.toLowerCase()))
                 .toList();
     }
 
@@ -62,16 +91,31 @@ public class CourseServiceImpl implements ICourseService {
         List<Course> list = courseDAO.findAll();
         Comparator<Course> comparator;
 
-        if("NAME".equalsIgnoreCase(type)){
+        if ("NAME".equalsIgnoreCase(type)) {
             comparator = Comparator.comparing(Course::getName);
-        }else{
+        } else {
             comparator = Comparator.comparing(Course::getId);
         }
 
-        if(!isAscending){
+        if (!isAscending) {
             comparator = comparator.reversed();
         }
         return list.stream().sorted(comparator).toList();
+    }
+
+    @Override
+    public int getTotalCoursesCount(String keyword) throws Exception {
+        return courseDAO.getTotalCoursesCount(keyword);
+    }
+
+    @Override
+    public List<Course> getCoursesByPage(String keyword, int page, int pageSize) throws Exception {
+        return courseDAO.getCoursesByPage(keyword, page, pageSize);
+    }
+
+    @Override
+    public List<Course> getRecommendedCourses(int studentId, int limit) throws Exception {
+        return courseDAO.getRecommendedCourses(studentId, limit);
     }
 
     public void validateCourseInfo(Course course) throws Exception {

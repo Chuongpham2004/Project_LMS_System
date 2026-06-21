@@ -24,4 +24,8 @@ public interface IStudentService {
     void changePassword(int studentId, String oldPassword, String newPassword) throws Exception;
 
     boolean checkCurrentPassword(int studentId, String rawPassword);
+
+    int getTotalStudentsCount(String keyword) throws Exception;
+
+    List<Student> getStudentsByPage(String keyword, int page, int pageSize) throws Exception;
 }

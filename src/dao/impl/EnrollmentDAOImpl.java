@@ -225,4 +225,49 @@ public class EnrollmentDAOImpl implements IEnrollmentDAO {
         }
         return null;
     }
+
+    @Override
+    public int getTotalEnrollmentsCount() throws Exception {
+        String sql = "SELECT COUNT(*) FROM enrollment";
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        }
+        return 0;
+    }
+
+    @Override
+    public List<EnrollmentDetail> getEnrollmentsByPage(int page, int pageSize) throws Exception {
+        List<entity.EnrollmentDetail> list = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+
+        // Dùng JOIN để lấy tên khóa học và tên học viên lên cùng một bảng phẳng
+        String sql = "SELECT e.id, c.name AS course_name, s.name AS student_name, s.email, e.registered_at, e.status " +
+                "FROM enrollment e " +
+                "JOIN course c ON e.course_id = c.id " +
+                "JOIN student s ON e.student_id = s.id " +
+                "ORDER BY e.registered_at DESC LIMIT ? OFFSET ?";
+
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, pageSize);
+            pstmt.setInt(2, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    entity.EnrollmentDetail ed = new entity.EnrollmentDetail();
+                    ed.setEnrollmentId(rs.getInt("id"));
+                    ed.setCourseName(rs.getString("course_name"));
+                    ed.setStudentName(rs.getString("student_name"));
+                    ed.setStudentEmail(rs.getString("email"));
+                    ed.setRegisteredAt(rs.getTimestamp("registered_at")); // Tuỳ kiểu dữ liệu thời gian của bạn
+                    ed.setStatus(rs.getString("status"));
+                    list.add(ed);
+                }
+            }
+        }
+        return list;
+    }
 }

@@ -17,6 +17,9 @@ public class StudentServiceImpl implements IStudentService {
     private final IStudentDAO studentDAO = new StudentDAOImpl();
     private final IEnrollmentDAO enrollmentDAO = new EnrollmentDAOImpl();
 
+    // Khởi tạo dịch vụ ghi nhật ký hệ thống ngầm
+    private final AuditLogServiceImpl auditLogService = new AuditLogServiceImpl();
+
     @Override
     public List<Student> getAllStudents() {
         return studentDAO.findAll();
@@ -40,6 +43,15 @@ public class StudentServiceImpl implements IStudentService {
         if (!studentDAO.insert(student)) {
             throw new Exception("❌ Thêm học viên thất bại do lỗi hệ thống!");
         }
+
+        // [NHÚNG AUDIT LOG]: Ghi nhận hành động thêm mới học viên
+        auditLogService.log(
+                "Admin",
+                "INSERT",
+                "student",
+                student.getId(),
+                "Thêm mới học viên thành công: " + student.getName() + " (Email: " + student.getEmail() + ", SĐT: " + student.getPhone() + ")"
+        );
     }
 
     @Override
@@ -53,9 +65,24 @@ public class StudentServiceImpl implements IStudentService {
         // Validate thông tin (truyền false vì lúc update không bắt nhập mật khẩu)
         validateStudentInfo(student, false);
 
+        // [XỬ LÝ LOG CHI TIẾT]: Chụp lại thay đổi trước khi lưu xuống DB
+        String details = String.format("Cập nhật thông tin học viên ID %d. [Cũ] Tên: %s, SĐT: %s, Phái: %s -> [Mới] Tên: %s, SĐT: %s, Phái: %s",
+                student.getId(),
+                existing.getName(), existing.getPhone(), (existing.getSex() == 1 ? "Nam" : "Nữ"),
+                student.getName(), student.getPhone(), (student.getSex() == 1 ? "Nam" : "Nữ"));
+
         if (!studentDAO.update(student)) {
             throw new Exception("❌ Cập nhật thông tin thất bại!");
         }
+
+        // [NHÚNG AUDIT LOG]: Actor linh hoạt vì hàm này có thể dùng bởi Admin hoặc chính Học viên tự sửa profile
+        auditLogService.log(
+                "Admin/Học viên ID: " + student.getId(),
+                "UPDATE",
+                "student",
+                student.getId(),
+                details
+        );
     }
 
     @Override
@@ -76,6 +103,15 @@ public class StudentServiceImpl implements IStudentService {
         if (!studentDAO.delete(id)) {
             throw new Exception("❌ Xóa học viên thất bại do lỗi hệ thống cơ sở dữ liệu!");
         }
+
+        // [NHÚNG AUDIT LOG]: Ghi nhận hành động xóa mềm tài khoản của Admin
+        auditLogService.log(
+                "Admin",
+                "DELETE",
+                "student",
+                id,
+                "Xóa mềm tài khoản học viên: " + existingStudent.getName() + " (Email: " + existingStudent.getEmail() + ")"
+        );
     }
 
     @Override
@@ -102,6 +138,25 @@ public class StudentServiceImpl implements IStudentService {
         if (!studentDAO.updatePassword(studentId, hashedNewPassword)) {
             throw new Exception("❌ Lỗi hệ thống: Không thể lưu mật khẩu mới vào cơ sở dữ liệu!");
         }
+
+        // [NHÚNG AUDIT LOG]: Ghi nhận học viên đổi mật khẩu thành công độc lập
+        auditLogService.log(
+                "Học viên ID: " + studentId,
+                "CHANGE_PASSWORD",
+                "student",
+                studentId,
+                "Học viên tự thay đổi mật khẩu đăng nhập thành công"
+        );
+    }
+
+    @Override
+    public List<Student> getStudentsByPage(String keyword, int page, int pageSize) throws Exception {
+        return studentDAO.getStudentsByPage(keyword, page, pageSize);
+    }
+
+    @Override
+    public int getTotalStudentsCount(String keyword) throws Exception {
+        return studentDAO.getTotalStudentsCount(keyword);
     }
 
     // ================= XỬ LÝ STREAM API =================

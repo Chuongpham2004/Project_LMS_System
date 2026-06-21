@@ -1,6 +1,7 @@
 package dao.impl;
 
 import entity.CourseStatDTO;
+import utils.ConsoleUtils;
 import utils.DBUtil;
 
 import java.sql.Connection;
@@ -26,9 +27,9 @@ public class StatisticDAO {
             int totalStudents = rsStudent.next() ? rsStudent.getInt(1) : 0;
             int totalCourses = rsCourse.next() ? rsCourse.getInt(1) : 0;
 
-            System.out.println("📊 TỔNG QUAN HỆ THỐNG:");
-            System.out.println("- Tổng số Học viên: " + totalStudents);
-            System.out.println("- Tổng số Khóa học: " + totalCourses);
+            ConsoleUtils.printSubMenuTitle("📊 TỔNG QUAN HỆ THỐNG");
+            ConsoleUtils.printlnData("- Tổng số Học viên: " + totalStudents);
+            ConsoleUtils.printlnData("- Tổng số Khóa học: " + totalCourses);
 
         } catch (Exception e) {
             System.err.println("❌ Lỗi thống kê tổng quan: " + e.getMessage());

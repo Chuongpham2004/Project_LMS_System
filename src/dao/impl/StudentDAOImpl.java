@@ -219,6 +219,58 @@ public class StudentDAOImpl implements IStudentDAO {
         return false;
     }
 
+    @Override
+    public int getTotalStudentsCount(String keyword) throws Exception {
+        // Tìm kiếm trên cả Tên, Email và ID
+        String sql = "SELECT COUNT(*) FROM student WHERE name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ?";
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            String searchPattern = "%" + keyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public List<Student> getStudentsByPage(String keyword, int page, int pageSize) throws Exception {
+        List<entity.Student> students = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+
+        String sql = "SELECT * FROM student WHERE name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ? ORDER BY id ASC LIMIT ? OFFSET ?";
+
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            String searchPattern = "%" + keyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+            pstmt.setInt(4, pageSize);
+            pstmt.setInt(5, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Student s = new entity.Student();
+                    s.setId(rs.getInt("id"));
+                    s.setName(rs.getString("name"));
+                    s.setEmail(rs.getString("email"));
+                    s.setPhone(rs.getString("phone"));
+                    s.setSex(rs.getInt("sex"));
+                    s.setDob(rs.getDate("dob"));
+                    students.add(s);
+                }
+            }
+        }
+        return students;
+    }
+
     private Student mapResultSetToStudent(ResultSet rs) throws Exception {
         Student student = new Student();
         student.setId(rs.getInt("id"));

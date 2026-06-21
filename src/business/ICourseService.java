@@ -19,4 +19,10 @@ public interface ICourseService {
     List<Course> searchByName(String keyword) throws Exception;
 
     List<Course> sortCourses(String type, boolean isAscending) throws Exception;
+
+    int getTotalCoursesCount(String keyword) throws Exception;
+
+    List<Course> getCoursesByPage(String keyword, int page, int pageSize) throws Exception;
+
+    List<Course> getRecommendedCourses(int studentId, int limit) throws Exception;
 }

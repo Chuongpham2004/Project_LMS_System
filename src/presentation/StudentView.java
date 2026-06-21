@@ -6,9 +6,11 @@ import entity.EnrollmentDetail;
 import entity.Student;
 import business.impl.CourseServiceImpl;
 import business.impl.StudentServiceImpl;
+import utils.ConsoleUtils;
 import utils.InputUtil;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
@@ -28,21 +30,18 @@ public class StudentView {
 
     public void showMenu(Scanner scanner) {
         while (true) {
-            System.out.println("\n===========================================");
-            System.out.println("     🎓 HỆ THỐNG HỌC TẬP (STUDENT PORTAL)  ");
-            System.out.println("===========================================");
-            System.out.println("👤 Học viên: " + loggedInStudent.getName() + " | 📧 Email: " + loggedInStudent.getEmail());
-            System.out.println("-------------------------------------------");
-            System.out.println("[1]. Xem & Tìm kiếm danh sách khóa học");
-            System.out.println("[2]. Đăng ký khóa học");
-            System.out.println("[3]. Xem khóa học đã đăng ký (Sắp xếp)");
-            System.out.println("[4]. Hủy đăng ký khóa học");
-            System.out.println("[5]. Xem thông tin cá nhân");
-            System.out.println("[6]. Cập nhật thông tin cá nhân");
-            System.out.println("[7]. Đổi mật khẩu (Bảo mật 2 lớp)");
-            System.out.println("[8]. Đăng xuất");
-            System.out.println("-------------------------------------------");
-            System.out.print("👉 Lựa chọn của bạn (1-8): ");
+            ConsoleUtils.printMenuBox("🎓 HỆ THỐNG HỌC TẬP (STUDENT PORTAL)", new String[]{
+                    "👤 Học viên: " + loggedInStudent.getName() + " | 📧 Email: " + loggedInStudent.getEmail(),
+                    "[1]. Xem & Tìm kiếm danh sách khóa học",
+                    "[2]. Đăng ký khóa học",
+                    "[3]. Xem khóa học đã đăng ký (Sắp xếp)",
+                    "[4]. Hủy đăng ký khóa học",
+                    "[5]. Xem thông tin cá nhân",
+                    "[6]. Cập nhật thông tin cá nhân",
+                    "[7]. Đổi mật khẩu (Bảo mật 2 lớp)",
+                    "[8]. Đăng xuất"
+            });
+            ConsoleUtils.printPrompt("👉 Lựa chọn của bạn (1-8): ");
 
             String choice = scanner.nextLine().trim();
 
@@ -70,10 +69,10 @@ public class StudentView {
                         handleChangePassword(scanner);
                         break;
                     case "8":
-                        System.out.println("🔒 Đã đăng xuất khỏi tài khoản Học viên.");
+                        ConsoleUtils.printlnInfo("🔒 Đã đăng xuất khỏi tài khoản Học viên.");
                         return;
                     default:
-                        System.out.println("❌ Lựa chọn không hợp lệ!");
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -85,56 +84,50 @@ public class StudentView {
 
     /**
      * TÍNH NĂNG 1: XEM VÀ TÌM KIẾM KHÓA HỌC
-     * Đáp ứng yêu cầu: "Xem danh sách khóa học đang có" & "Tìm kiếm khóa học theo tên"
+     * HÀM XEM VÀ TÌM KIẾM KHÓA HỌC (TÍCH HỢP PHÂN TRANG & GỢI Ý NÂNG CAO)
      */
     private void handleViewAndSearchCourses(Scanner scanner) {
         while (true) {
-            System.out.println("\n--- 📚 DANH SÁCH KHÓA HỌC ---");
-            System.out.println("[1]. Hiển thị tất cả khóa học");
-            System.out.println("[2]. Tìm kiếm khóa học theo tên");
-            System.out.println("[3]. Quay lại");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("📚 DANH SÁCH KHÓA HỌC");
+            ConsoleUtils.printlnData("[1]. Hiển thị tất cả khóa học");
+            ConsoleUtils.printlnData("[2]. Tìm kiếm khóa học theo tên");
+            ConsoleUtils.printlnData("[3]. Quay lại Menu Học viên");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
 
             String choice = scanner.nextLine().trim();
             if (choice.equals("3")) return;
 
-            try {
-                if (choice.equals("1")) {
-                    displayCourseTable(courseService.getAllCourses());
-                } else if (choice.equals("2")) {
+            if (choice.equals("1")) {
+                // Xem tất cả khóa học -> Truyền từ khóa rỗng ""
+                displayPaginatedCoursesForStudent("", scanner);
+            } else if (choice.equals("2")) {
 
-                    // LỚP PHÒNG THỦ: Chặn chuỗi rỗng và ép nhập đúng từ khóa
-                    while (true) {
-                        System.out.print("🔍 Nhập từ khóa tên khóa học (Hoặc gõ '0' để Hủy): ");
-                        String keyword = scanner.nextLine().trim();
+                // LỚP PHÒNG THỦ: Ép nhập từ khóa tìm kiếm hợp lệ
+                while (true) {
+                    System.out.print("🔍 Nhập từ khóa tên khóa học (Hoặc gõ '0' để Hủy): ");
+                    String keyword = scanner.nextLine().trim();
 
-                        if (keyword.equals("0")) {
-                            System.out.println("ℹ️ Đã hủy thao tác tìm kiếm.");
-                            break; // Thoát vòng lặp nhập từ khóa, quay lại menu danh sách
-                        }
-
-                        if (keyword.isEmpty()) {
-                            System.out.println("❌ Lỗi: Từ khóa tìm kiếm không được để trống! Vui lòng nhập lại.");
-                            continue; // Bắt nhập lại
-                        }
-
-                        // (Tùy chọn) Bỏ comment đoạn này nếu bạn muốn ép nhập ít nhất 2 ký tự
-
-                        if (keyword.length() < 2) {
-                            System.out.println("❌ Lỗi: Vui lòng nhập ít nhất 2 ký tự để tìm kiếm hiệu quả hơn!");
-                            continue;
-                        }
-
-                        // Nếu từ khóa hợp lệ thì gọi Service và in bảng
-                        displayCourseTable(courseService.searchByName(keyword));
-                        break; // Thoát vòng lặp sau khi tìm kiếm thành công
+                    if (keyword.equals("0")) {
+                        System.out.println("ℹ️ Đã hủy thao tác tìm kiếm.");
+                        break;
                     }
 
-                } else {
-                    System.out.println("❌ Lựa chọn không hợp lệ!");
+                    if (keyword.isEmpty()) {
+                        System.out.println("❌ Lỗi: Từ khóa tìm kiếm không được để trống! Vui lòng nhập lại.");
+                        continue;
+                    }
+
+                    if (keyword.length() < 2) {
+                        System.out.println("❌ Lỗi: Vui lòng nhập ít nhất 2 ký tự để tìm kiếm hiệu quả hơn!");
+                        continue;
+                    }
+
+                    // Từ khóa đã sạch -> Bàn giao cho hàm phân trang hiển thị kết quả lọc
+                    displayPaginatedCoursesForStudent(keyword, scanner);
+                    break;
                 }
-            } catch (Exception e) {
-                System.out.println("❌ Lỗi truy xuất khóa học: " + e.getMessage());
+            } else {
+                System.out.println("❌ Lựa chọn không hợp lệ!");
             }
         }
     }
@@ -190,7 +183,7 @@ public class StudentView {
     /**
      * TÍNH NĂNG 3: XEM VÀ SẮP XẾP KHÓA HỌC ĐÃ ĐĂNG KÝ
      */
-    private void  showMyEnrollments(Scanner scanner) {
+    private void showMyEnrollments(Scanner scanner) {
         // 1. Kéo toàn bộ lịch sử học tập của sinh viên này lên
         List<EnrollmentDetail> myEnrollments = enrollmentService.getMyEnrollments(loggedInStudent.getId());
 
@@ -200,14 +193,14 @@ public class StudentView {
         }
 
         while (true) {
-            System.out.println("\n--- 📚 LỊCH SỬ ĐĂNG KÝ KHÓA HỌC ---");
-            System.out.println("[1]. Xem danh sách gốc");
-            System.out.println("[2]. Sắp xếp theo TÊN khóa học (A-Z)");
-            System.out.println("[3]. Sắp xếp theo TÊN khóa học (Z-A)");
-            System.out.println("[4]. Sắp xếp theo NGÀY đăng ký (Mới nhất trước)");
-            System.out.println("[5]. Sắp xếp theo NGÀY đăng ký (Cũ nhất trước)");
-            System.out.println("[6]. Quay lại");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("📚 LỊCH SỬ ĐĂNG KÝ KHÓA HỌC");
+            ConsoleUtils.printlnData("[1]. Xem danh sách gốc");
+            ConsoleUtils.printlnData("[2]. Sắp xếp theo TÊN khóa học (A-Z)");
+            ConsoleUtils.printlnData("[3]. Sắp xếp theo TÊN khóa học (Z-A)");
+            ConsoleUtils.printlnData("[4]. Sắp xếp theo NGÀY đăng ký (Mới nhất trước)");
+            ConsoleUtils.printlnData("[5]. Sắp xếp theo NGÀY đăng ký (Cũ nhất trước)");
+            ConsoleUtils.printlnData("[6]. Quay lại");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
 
             String choice = scanner.nextLine().trim();
             if (choice.equals("6")) return;
@@ -245,17 +238,20 @@ public class StudentView {
             }
 
             // 3. In kết quả đã sắp xếp ra bảng
-            System.out.println("\n+---------+------------------------------------+---------------------+-------------+");
-            System.out.printf("| %-7s | %-34s | %-19s | %-11s |\n", "Mã Đơn", "Tên khóa học", "Ngày đăng ký", "Trạng thái");
-            System.out.println("+---------+------------------------------------+---------------------+-------------+");
+            int[] widths = {7, 34, 19, 11};
+            String[] headers = {"Mã Đơn", "Tên khóa học", "Ngày đăng ký", "Trạng thái"};
+            List<String[]> rows = new ArrayList<>();
             for (EnrollmentDetail e : sortedList) {
-                // Format lại Timestamp cho đẹp (bỏ phần mili-giây)
                 String formattedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(e.getRegisteredAt());
-
-                System.out.printf("| %-7d | %-34s | %-19s | %-11s |\n",
-                        e.getEnrollmentId(), e.getCourseName(), formattedDate, e.getStatus());
+                rows.add(new String[]{
+                        String.valueOf(e.getEnrollmentId()),
+                        e.getCourseName(),
+                        formattedDate,
+                        e.getStatus()
+                });
             }
-            System.out.println("+---------+------------------------------------+---------------------+-------------+");
+            System.out.println();
+            ConsoleUtils.printTable(headers, widths, rows);
         }
     }
 
@@ -340,41 +336,194 @@ public class StudentView {
     // --- CÁC HÀM TIỆN ÍCH HIỂN THỊ ĐÃ LÀM TỪ TRƯỚC ---
     private void displayCourseTable(List<Course> courses) {
         if (courses.isEmpty()) {
-            System.out.println("ℹ️ Không tìm thấy khóa học nào.");
+            ConsoleUtils.printlnInfo("ℹ️ Không tìm thấy khóa học nào.");
             return;
         }
-        System.out.println("\n+----+------------------------------------+----------+--------------------+");
-        System.out.printf("| %-2s | %-34s | %-8s | %-18s |\n", "ID", "Tên khóa học", "Số giờ", "Giảng viên");
-        System.out.println("+----+------------------------------------+----------+--------------------+");
+        int[] widths = {2, 34, 8, 18};
+        String[] headers = {"ID", "Tên khóa học", "Số giờ", "Giảng viên"};
+        List<String[]> rows = new ArrayList<>();
         for (Course c : courses) {
-            System.out.printf("| %-2d | %-34s | %-8d | %-18s |\n", c.getId(), c.getName(), c.getDuration(), c.getInstructor());
+            rows.add(new String[]{
+                    String.valueOf(c.getId()),
+                    c.getName(),
+                    String.valueOf(c.getDuration()),
+                    c.getInstructor()
+            });
         }
-        System.out.println("+----+------------------------------------+----------+--------------------+\n");
+        System.out.println();
+        ConsoleUtils.printTable(headers, widths, rows);
+        System.out.println();
+    }
+
+    private void displayCourseTable(List<Course> courses, String nameHeader) {
+        if (courses.isEmpty()) {
+            return;
+        }
+        int[] widths = {2, 34, 8, 18};
+        String[] headers = {"ID", nameHeader, "Số giờ", "Giảng viên"};
+        List<String[]> rows = new ArrayList<>();
+        for (Course c : courses) {
+            rows.add(new String[]{
+                    String.valueOf(c.getId()),
+                    c.getName(),
+                    String.valueOf(c.getDuration()),
+                    c.getInstructor()
+            });
+        }
+        ConsoleUtils.printTable(headers, widths, rows);
+    }
+
+    private void displayPaginatedCoursesForStudent(String keyword, Scanner scanner) {
+        int currentPage = 1;
+        int pageSize = 5; // Hiển thị 5 khóa học trên mỗi trang
+
+        while (true) {
+            try {
+                // 1. Lấy tổng số lượng bản ghi theo bộ lọc từ khóa
+                int totalRecords = courseService.getTotalCoursesCount(keyword);
+                if (totalRecords == 0) {
+                    System.out.println("❌ Không tìm thấy khóa học nào phù hợp!");
+                    return;
+                }
+
+                // 2. Tính tổng số trang
+                int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                // 3. Kéo dữ liệu trang hiện tại lên
+                List<Course> courses = courseService.getCoursesByPage(keyword, currentPage, pageSize);
+
+                // =========================================================================
+                // IN PHÂN ĐOẠN 1: ⭐ GỢI Ý KHÓA HỌC DÀNH RIÊNG CHO BẠN ⭐ (BONUS NÂNG CAO 2)
+                // Điều kiện hiện: Chỉ hiện ở Trang 1 khi người dùng đang xem danh sách tổng quan (keyword rỗng)
+                // =========================================================================
+                if (keyword.isEmpty() && currentPage == 1) {
+                    try {
+                        List<Course> recommendations = courseService.getRecommendedCourses(loggedInStudent.getId(), 3);
+
+                        if (!recommendations.isEmpty()) {
+                            ConsoleUtils.printlnData("\n⭐ [GỢI Ý] CÓ THỂ BẠN SẼ THÍCH (Dựa trên các khóa học bạn và học viên cùng gu đã đăng ký):");
+                            displayCourseTable(recommendations, "Tên khóa học gợi ý");
+                        }
+                    } catch (Exception e) {
+                        // Phòng thủ: Nếu logic gợi ý lỗi (ví dụ DB rớt mạng), danh sách chính vẫn phải hiển thị mượt mà
+                        System.out.println("ℹ️ Không thể tải mục gợi ý khóa học lúc này.");
+                    }
+                }
+
+                // =========================================================================
+                // IN PHÂN ĐOẠN 2: 📚 DANH SÁCH KHÓA HỌC CHÍNH (CÓ PHÂN TRANG)
+                // =========================================================================
+                String pageTitle = String.format("DANH SÁCH KHÓA HỌC HỆ THỐNG (Trang %d/%d) - Tổng: %d khóa", currentPage, totalPages, totalRecords);
+                ConsoleUtils.printPageHeader(pageTitle);
+                if (!keyword.isEmpty()) {
+                    ConsoleUtils.printlnData("   🔍 Bộ lọc tìm kiếm từ khóa: [" + keyword + "]");
+                }
+                displayCourseTable(courses);
+                ConsoleUtils.printDivider(73);
+
+                // 4. MENU ĐIỀU HƯỚNG TẬP LỆNH LẬT TRANG
+                ConsoleUtils.printlnData("Điều hướng: [N] Trang sau | [P] Trang trước | [Số] Nhảy tới trang | [0] Thoát");
+                ConsoleUtils.printPrompt("👉 Nhập lựa chọn của bạn: ");
+                String action = scanner.nextLine().trim().toUpperCase();
+
+                if (action.equals("0")) {
+                    break; // Thoát màn hình phân trang, trả điều khiển về menu handleViewAndSearchCourses
+                } else if (action.equals("N")) {
+                    if (currentPage < totalPages) currentPage++;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang cuối cùng!");
+                } else if (action.equals("P")) {
+                    if (currentPage > 1) currentPage--;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang đầu tiên!");
+                } else {
+                    try {
+                        int targetPage = Integer.parseInt(action);
+                        if (targetPage >= 1 && targetPage <= totalPages) {
+                            currentPage = targetPage;
+                        } else {
+                            System.out.println("❌ Trang không tồn tại!");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("❌ Lựa chọn không hợp lệ! Vui lòng chỉ nhập N, P, Số trang hoặc số 0.");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi hệ thống: Không thể tải dữ liệu khóa học (" + e.getMessage() + ")");
+                break;
+            }
+        }
     }
 
     private void showProfile() {
-        System.out.println("\n--- 👤 THÔNG TIN CÁ NHÂN ---");
-        System.out.println("- Họ và tên  : " + loggedInStudent.getName());
-        System.out.println("- Ngày sinh  : " + loggedInStudent.getDob());
-        System.out.println("- Email      : " + loggedInStudent.getEmail());
-        System.out.println("- Điện thoại : " + loggedInStudent.getPhone());
-        System.out.println("- Giới tính  : " + (loggedInStudent.getSex() == 1 ? "Nam" : "Nữ"));
-        System.out.println("----------------------------");
+        ConsoleUtils.printSubMenuTitle("👤 THÔNG TIN CÁ NHÂN");
+        ConsoleUtils.printlnData("- Họ và tên  : " + loggedInStudent.getName());
+        ConsoleUtils.printlnData("- Ngày sinh  : " + loggedInStudent.getDob());
+        ConsoleUtils.printlnData("- Email      : " + loggedInStudent.getEmail());
+        ConsoleUtils.printlnData("- Điện thoại : " + loggedInStudent.getPhone());
+        ConsoleUtils.printlnData("- Giới tính  : " + (loggedInStudent.getSex() == 1 ? "Nam" : "Nữ"));
     }
 
     private void updateProfile(Scanner scanner) {
-        System.out.println("\n--- 📝 CẬP NHẬT THÔNG TIN ---");
-        System.out.println("⚠️ Lưu ý: Email không được phép thay đổi.");
-        try {
-            loggedInStudent.setName(InputUtil.getValidName(scanner));
-            loggedInStudent.setDob(InputUtil.getValidDate(scanner));
-            loggedInStudent.setPhone(InputUtil.getValidPhone(scanner));
-            loggedInStudent.setSex(InputUtil.getValidSex(scanner));
+        // Tạo một đối tượng tạm thời sao chép từ loggedInStudent
+        // Điều này đảm bảo nếu người dùng sửa giữa chừng rồi ấn Hủy, dữ liệu gốc trong phiên đăng nhập không bị sai lệch
+        Student tempStudent = new entity.Student();
+        tempStudent.setId(loggedInStudent.getId());
+        tempStudent.setName(loggedInStudent.getName());
+        tempStudent.setDob(loggedInStudent.getDob());
+        tempStudent.setPhone(loggedInStudent.getPhone());
+        tempStudent.setSex(loggedInStudent.getSex());
+        tempStudent.setEmail(loggedInStudent.getEmail());
 
-            studentService.updateStudent(loggedInStudent);
-            System.out.println("✅ Cập nhật thông tin cá nhân thành công!");
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        while (true) {
+            ConsoleUtils.printSubMenuTitle("📝 CẬP NHẬT THÔNG TIN CÁ NHÂN");
+            ConsoleUtils.printlnData("Thông tin hiện tại của bạn:");
+            ConsoleUtils.printlnData("1. Họ và tên : " + tempStudent.getName());
+            ConsoleUtils.printlnData("2. Ngày sinh  : " + tempStudent.getDob());
+            ConsoleUtils.printlnData("3. Số điện thại: " + tempStudent.getPhone());
+            ConsoleUtils.printlnData("4. Giới tính  : " + (tempStudent.getSex() == 1 ? "Nam" : "Nữ"));
+            ConsoleUtils.printlnData("[5]. BẤM PHÍM 5 ĐỂ LƯU THAY ĐỔI");
+            ConsoleUtils.printlnData("[0]. HỦY BỎ & QUAY LẠI (Không lưu)");
+            ConsoleUtils.printPrompt("👉 Mời chọn mục cần chỉnh sửa (0-5): ");
+
+            String choice = scanner.nextLine().trim();
+
+            if (choice.equals("0")) {
+                System.out.println("ℹ️ Đã hủy toàn bộ thay đổi thông tin cá nhân.");
+                return;
+            }
+
+            try {
+                switch (choice) {
+                    case "1":
+                        tempStudent.setName(InputUtil.getValidName(scanner));
+                        break;
+                    case "2":
+                        tempStudent.setDob(InputUtil.getValidDate(scanner));
+                        break;
+                    case "3":
+                        tempStudent.setPhone(InputUtil.getValidPhone(scanner));
+                        break;
+                    case "4":
+                        tempStudent.setSex(InputUtil.getValidSex(scanner));
+                        break;
+                    case "5":
+                        // Đồng bộ dữ liệu tạm thời vào đối tượng đăng nhập chính thức
+                        loggedInStudent.setName(tempStudent.getName());
+                        loggedInStudent.setDob(tempStudent.getDob());
+                        loggedInStudent.setPhone(tempStudent.getPhone());
+                        loggedInStudent.setSex(tempStudent.getSex());
+
+                        // Gọi Service thực thi cập nhật xuống Database
+                        studentService.updateStudent(loggedInStudent);
+                        System.out.println("✅ Cập nhật thông tin cá nhân thành công!");
+                        return; // Lưu xong thì thoát hàm
+                    default:
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi khi nhập liệu: " + e.getMessage());
+            }
         }
     }
 }

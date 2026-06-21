@@ -18,4 +18,8 @@ public interface IStudentDAO {
     boolean delete(int id);
 
     boolean updatePassword(int id, String newHashedPassword);
+
+    int getTotalStudentsCount(String keyword) throws Exception;
+
+    List<Student> getStudentsByPage(String keyword, int page, int pageSize) throws Exception;
 }

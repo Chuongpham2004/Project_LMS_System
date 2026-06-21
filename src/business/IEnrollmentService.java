@@ -19,4 +19,8 @@ public interface IEnrollmentService {
     List<EnrollmentDetail> getMyEnrollments(int studentId);
 
     void cancelEnrollment(int studentId, int enrollmentId) throws Exception;
+
+    int getTotalEnrollmentsCount() throws Exception;
+
+    List<EnrollmentDetail> getEnrollmentsByPage(int page, int pageSize) throws Exception;
 }

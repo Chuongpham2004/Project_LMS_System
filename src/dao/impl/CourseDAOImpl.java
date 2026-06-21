@@ -164,6 +164,126 @@ public class CourseDAOImpl implements ICourseDAO {
         return deletedList;
     }
 
+    @Override
+    public int getTotalCoursesCount(String keyword) throws Exception {
+        // Thêm điều kiện AND name ILIKE ?
+        String sql = "SELECT COUNT(*) FROM course WHERE is_deleted = false AND name ILIKE ?";
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Nếu keyword là "", nó sẽ thành ILIKE '%%' -> Lấy tất cả
+            pstmt.setString(1, "%" + keyword + "%");
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1); // Trả về số lượng sau khi đã lọc
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public List<entity.Course> getCoursesByPage(String keyword, int page, int pageSize) throws Exception {
+        List<entity.Course> courses = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
+
+        // Thêm điều kiện ILIKE trước ORDER BY và LIMIT
+        String sql = "SELECT * FROM course WHERE is_deleted = false AND name ILIKE ? ORDER BY id ASC LIMIT ? OFFSET ?";
+
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, "%" + keyword + "%");
+            pstmt.setInt(2, pageSize);
+            pstmt.setInt(3, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Course course = new entity.Course();
+                    course.setId(rs.getInt("id"));
+                    course.setName(rs.getString("name"));
+                    course.setDuration(rs.getInt("duration"));
+                    course.setInstructor(rs.getString("instructor"));
+                    courses.add(course);
+                }
+            }
+        }
+        return courses;
+    }
+
+    @Override
+    public List<Course> getRecommendedCourses(int studentId, int limit) throws Exception {
+        List<Course> recommendedCourses = new ArrayList<>();
+
+        // THUẬT TOÁN 1: Tìm các khóa học được đăng ký nhiều nhất bởi những học viên có "cùng gu" học với bạn
+        String recommendationSql =
+                "SELECT c.*, COUNT(*) AS frequency " +
+                        "FROM enrollment e " +
+                        "JOIN course c ON e.course_id = c.id " +
+                        "WHERE e.student_id IN (" +
+                        "    SELECT DISTINCT student_id FROM enrollment " +
+                        "    WHERE course_id IN (SELECT course_id FROM enrollment WHERE student_id = ?) " +
+                        "    AND student_id <> ?" +
+                        ") " +
+                        "AND e.course_id NOT IN (SELECT course_id FROM enrollment WHERE student_id = ?) " +
+                        "AND c.is_deleted = false " +
+                        "GROUP BY c.id " +
+                        "ORDER BY frequency DESC LIMIT ?";
+
+        try (Connection conn = utils.DBUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(recommendationSql)) {
+
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, studentId);
+            pstmt.setInt(3, studentId);
+            pstmt.setInt(4, limit);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    entity.Course course = new entity.Course();
+                    course.setId(rs.getInt("id"));
+                    course.setName(rs.getString("name"));
+                    course.setDuration(rs.getInt("duration"));
+                    course.setInstructor(rs.getString("instructor"));
+                    recommendedCourses.add(course);
+                }
+            }
+        }
+
+        // BIỆN PHÁP PHÒNG THỦ (Xử lý Cold Start): Nếu danh sách gợi ý trống (Do học viên mới hoặc chưa ai học chung)
+        // Hệ thống tự động fallback sang gợi ý các khóa học đang HOT nhất hệ thống mà học viên này chưa đăng ký
+        if (recommendedCourses.isEmpty()) {
+            String fallbackSql =
+                    "SELECT c.*, COUNT(e.id) AS popularity " +
+                            "FROM course c " +
+                            "LEFT JOIN enrollment e ON c.id = e.course_id " +
+                            "WHERE c.is_deleted = false " +
+                            "AND c.id NOT IN (SELECT course_id FROM enrollment WHERE student_id = ?) " +
+                            "GROUP BY c.id " +
+                            "ORDER BY popularity DESC LIMIT ?";
+
+            try (Connection conn = utils.DBUtil.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(fallbackSql)) {
+
+                pstmt.setInt(1, studentId);
+                pstmt.setInt(2, limit);
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        entity.Course course = new entity.Course();
+                        course.setId(rs.getInt("id"));
+                        course.setName(rs.getString("name"));
+                        course.setDuration(rs.getInt("duration"));
+                        course.setInstructor(rs.getString("instructor"));
+                        recommendedCourses.add(course);
+                    }
+                }
+            }
+        }
+        return recommendedCourses;
+    }
+
     /**
      * Hàm tiện ích map dữ liệu từ DB lên Đối tượng Course
      */

@@ -1,6 +1,6 @@
 package presentation;
 
-import org.mindrot.jbcrypt.BCrypt;
+import utils.ConsoleUtils;
 import utils.DBUtil;
 
 import java.util.Scanner;
@@ -12,14 +12,12 @@ public class Main {
         AuthView authView = new AuthView();
 
         while (true) {
-            System.out.println("\n===========================================");
-            System.out.println("  HỆ THỐNG QUẢN LÝ KHÓA HỌC VÀ HỌC VIÊN  ");
-            System.out.println("===========================================");
-            System.out.println("[1]. Đăng nhập");
-            System.out.println("[2]. Đăng ký");
-            System.out.println("[3]. Thoát chương trình");
-            System.out.println("-------------------------------------------");
-            System.out.print("👉 Mời bạn chọn chức năng (1-3): ");
+            ConsoleUtils.printMenuBox("HỆ THỐNG QUẢN LÝ KHÓA HỌC VÀ HỌC VIÊN", new String[]{
+                    "[1]. Đăng nhập",
+                    "[2]. Đăng ký",
+                    "[3]. Thoát chương trình"
+            });
+            ConsoleUtils.printPrompt("👉 Mời bạn chọn chức năng (1-3): ");
 
             String choice = scanner.nextLine();
             switch (choice) {
@@ -27,23 +25,23 @@ public class Main {
                     try {
                         authView.showLogin(scanner);
                     } catch (Exception e) {
-                        System.out.println("❌ Lỗi hệ thống: Quá trình đăng nhập gặp sự cố. Vui lòng thử lại!");
+                        ConsoleUtils.printlnError("❌ Lỗi hệ thống: Quá trình đăng nhập gặp sự cố. Vui lòng thử lại!");
                     }
                     break;
                 case "2":
                     try {
                         authView.showRegister(scanner);
                     } catch (Exception e) {
-                        System.out.println("❌ Lỗi hệ thống: Quá trình đăng ký gặp sự cố. Vui lòng thử lại!");
+                        ConsoleUtils.printlnError("❌ Lỗi hệ thống: Quá trình đăng ký gặp sự cố. Vui lòng thử lại!");
                     }
                     break;
                 case "3":
-                    System.out.println("👋 Cảm ơn bạn đã sử dụng hệ thống. Hẹn gặp lại!");
+                    ConsoleUtils.printlnInfo("👋 Cảm ơn bạn đã sử dụng hệ thống. Hẹn gặp lại!");
                     scanner.close();
                     System.exit(0);
                     break;
                 default:
-                    System.out.println("❌ Lựa chọn không hợp lệ. Vui lòng chọn lại (1-3).");
+                    ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ. Vui lòng chọn lại (1-3).");
                     break;
             }
         }

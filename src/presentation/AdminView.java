@@ -1,14 +1,16 @@
 package presentation;
 
+import business.impl.AuditLogServiceImpl;
 import business.impl.CourseServiceImpl;
 import business.impl.EnrollmentServiceImpl;
 import business.impl.StudentServiceImpl;
 import dao.impl.StatisticDAO;
-import entity.Course;
-import entity.CourseStatDTO;
-import entity.EnrollmentDetail;
-import entity.Student;
+import entity.*;
 
+import utils.ConsoleUtils;
+import utils.InputUtil;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -19,46 +21,46 @@ public class AdminView {
     private final EnrollmentServiceImpl enrollmentService = new EnrollmentServiceImpl();
     private final StudentServiceImpl studentService = new StudentServiceImpl();
     private final StatisticDAO statisticDAO = new StatisticDAO();
+    private final AuditLogServiceImpl auditLogService = new AuditLogServiceImpl();
 
     /**
      * MENU TỔNG (DASHBOARD) - Đây là nơi Admin vào đầu tiên sau khi Login
      */
     public void showMenu(Scanner scanner) {
         while (true) {
-            System.out.println("\n===========================================");
-            System.out.println("          HỆ THỐNG QUẢN TRỊ (ADMIN)        ");
-            System.out.println("===========================================");
-            System.out.println("[1]. Quản lý Khóa học");
-            System.out.println("[2]. Quản lý Học viên");
-            System.out.println("[3]. Quản lý Đăng ký khóa học");
-            System.out.println("[4]. Thống kê & Báo cáo");
-            System.out.println("[5]. Đăng xuất");
-            System.out.println("-------------------------------------------");
-            System.out.print("👉 Mời chọn phân hệ quản lý (1-5): ");
+            ConsoleUtils.printMenuBox("HỆ THỐNG QUẢN TRỊ (ADMIN)", new String[]{
+                    "[1]. Quản lý Khóa học",
+                    "[2]. Quản lý Học viên",
+                    "[3]. Quản lý Đăng ký khóa học",
+                    "[4]. Thống kê & Báo cáo",
+                    "[5]. Nhật ký hệ thống (Audit Log)",
+                    "[6]. Đăng xuất"
+            });
+            ConsoleUtils.printPrompt("👉 Mời chọn phân hệ quản lý (1-6): ");
 
             String choice = scanner.nextLine().trim();
 
             switch (choice) {
                 case "1":
-                    // Rẽ nhánh vào Menu con của Khóa học
                     handleCourseManagement(scanner);
                     break;
                 case "2":
-                    // Rẽ nhánh vào Menu con của Học viên
                     handleStudentManagement(scanner);
                     break;
                 case "3":
-                    // Rẽ nhánh vào Menu con của Đăng ký
                     handleEnrollmentManagement(scanner);
                     break;
                 case "4":
                     handleStatistics(scanner);
                     break;
                 case "5":
-                    System.out.println("🔒 Đã đăng xuất quyền Admin.");
+                    handleViewAuditLogs(scanner);
+                    break;
+                case "6":
+                    ConsoleUtils.printlnInfo("🔒 Đã đăng xuất quyền Admin.");
                     return; // Thoát vòng lặp tổng, về màn hình Đăng nhập
                 default:
-                    System.out.println("❌ Lựa chọn không hợp lệ!");
+                    ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
             }
         }
     }
@@ -68,15 +70,15 @@ public class AdminView {
      */
     private void handleCourseManagement(Scanner scanner) {
         while (true) {
-            System.out.println("\n--- 📚 PHÂN HỆ QUẢN LÝ KHÓA HỌC ---");
-            System.out.println("[1]. Xem danh sách | [2]. Thêm | [3]. Sửa | [4]. Xóa | [5]. Tìm kiếm | [6]. Sắp xếp | [7]. Quay lại Dashboard");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("📚 PHÂN HỆ QUẢN LÝ KHÓA HỌC");
+            ConsoleUtils.printlnData("[1]. Xem danh sách | [2]. Thêm | [3]. Sửa | [4]. Xóa | [5]. Tìm kiếm | [6]. Sắp xếp | [7]. Quay lại Dashboard");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
             String choice = scanner.nextLine().trim();
 
             try {
                 switch (choice) {
                     case "1":
-                        displayCourseTable(courseService.getAllCourses());
+                        displayPaginatedCourses("", scanner);
                         break;
                     case "2":
                         handleIdInsert(scanner);
@@ -96,7 +98,7 @@ public class AdminView {
                     case "7":
                         return; // Thoát menu con, quay về Dashboard
                     default:
-                        System.out.println("❌ Lựa chọn không hợp lệ!");
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -109,15 +111,15 @@ public class AdminView {
      */
     private void handleStudentManagement(Scanner scanner) {
         while (true) {
-            System.out.println("\n--- 👨‍🎓 PHÂN HỆ QUẢN LÝ HỌC VIÊN ---");
-            System.out.println("[1]. Xem danh sách | [2]. Thêm | [3]. Sửa | [4]. Xóa | [5]. Tìm kiếm | [6]. Sắp xếp | [7]. Quay lại Dashboard");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("👨‍🎓 PHÂN HỆ QUẢN LÝ HỌC VIÊN");
+            ConsoleUtils.printlnData("[1]. Xem danh sách | [2]. Thêm | [3]. Sửa | [4]. Xóa | [5]. Tìm kiếm | [6]. Sắp xếp | [7]. Quay lại Dashboard");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
             String choice = scanner.nextLine().trim();
 
             try {
                 switch (choice) {
                     case "1":
-                        displayStudentTable(studentService.getAllStudents());
+                        displayPaginatedStudents("", scanner);
                         break;
                     case "2":
                         handleStudentInsert(scanner);
@@ -137,7 +139,7 @@ public class AdminView {
                     case "7":
                         return; // Quay về Dashboard
                     default:
-                        System.out.println("❌ Lựa chọn không hợp lệ!");
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -150,16 +152,16 @@ public class AdminView {
      */
     private void handleEnrollmentManagement(Scanner scanner) {
         while (true) {
-            System.out.println("\n--- 📋 PHÂN HỆ QUẢN LÝ ĐĂNG KÝ ---");
-            System.out.println("[1]. Hiển thị danh sách sinh viên theo từng khóa | [2]. Duyệt sinh viên đăng ký | [3]. Xóa sinh viên khỏi khóa học | [4]. Quay lại Dashboard");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("📋 PHÂN HỆ QUẢN LÝ ĐĂNG KÝ");
+            ConsoleUtils.printlnData("[1]. Hiển thị danh sách sinh viên theo từng khóa | [2]. Duyệt sinh viên đăng ký | [3]. Xóa sinh viên khỏi khóa học | [4]. Quay lại Dashboard");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
             String choice = scanner.nextLine().trim();
 
             try {
                 switch (choice) {
                     case "1":
-                        System.out.println("\n--- DANH SÁCH SINH VIÊN THEO TỪNG KHÓA HỌC ---");
-                        displayGroupedEnrollments();
+                        ConsoleUtils.printSubMenuTitle("DANH SÁCH SINH VIÊN THEO TỪNG KHÓA HỌC");
+                        displayPaginatedEnrollments(scanner);
                         break;
                     case "2":
                         handleApproveEnrollment(scanner);
@@ -170,7 +172,7 @@ public class AdminView {
                     case "4":
                         return;
                     default:
-                        System.out.println("❌ Lựa chọn không hợp lệ!");
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
                 }
             } catch (NumberFormatException e) {
                 System.out.println("❌ Lỗi: Định dạng số nhập vào không chính xác!");
@@ -185,13 +187,13 @@ public class AdminView {
      */
     private void handleStatistics(Scanner scanner) {
         while (true) {
-            System.out.println("\n--- 📈 PHÂN HỆ THỐNG KÊ & BÁO CÁO ---");
-            System.out.println("[1]. Tổng quan hệ thống (Tổng khóa học & Tổng học viên)");
-            System.out.println("[2]. Tổng số học viên theo từng khóa học");
-            System.out.println("[3]. Top 5 khóa học đông sinh viên nhất");
-            System.out.println("[4]. Danh sách khóa học có trên 10 học viên");
-            System.out.println("[5]. Quay lại Dashboard");
-            System.out.print("👉 Lựa chọn: ");
+            ConsoleUtils.printSubMenuTitle("📈 PHÂN HỆ THỐNG KÊ & BÁO CÁO");
+            ConsoleUtils.printlnData("[1]. Tổng quan hệ thống (Tổng khóa học & Tổng học viên)");
+            ConsoleUtils.printlnData("[2]. Tổng số học viên theo từng khóa học");
+            ConsoleUtils.printlnData("[3]. Top 5 khóa học đông sinh viên nhất");
+            ConsoleUtils.printlnData("[4]. Danh sách khóa học có trên 10 học viên");
+            ConsoleUtils.printlnData("[5]. Quay lại Dashboard");
+            ConsoleUtils.printPrompt("👉 Lựa chọn: ");
 
             String choice = scanner.nextLine().trim();
 
@@ -200,18 +202,18 @@ public class AdminView {
                     statisticDAO.printGeneralStatistics();
                     break;
                 case "2":
-                    System.out.println("\n📊 SỐ LƯỢNG HỌC VIÊN THEO TỪNG KHÓA:");
+                    ConsoleUtils.printlnData("\n📊 SỐ LƯỢNG HỌC VIÊN THEO TỪNG KHÓA:");
                     displayStatTable(statisticDAO.getStudentsPerCourse());
                     break;
                 case "3":
-                    System.out.println("\n🏆 TOP 5 KHÓA HỌC ĐÔNG SINH VIÊN NHẤT:");
+                    ConsoleUtils.printlnData("\n🏆 TOP 5 KHÓA HỌC ĐÔNG SINH VIÊN NHẤT:");
                     displayStatTable(statisticDAO.getTop5Courses());
                     break;
                 case "4":
-                    System.out.println("\n🔥 CÁC KHÓA HỌC CÓ TRÊN 10 HỌC VIÊN:");
-                    List<entity.CourseStatDTO> hotCourses = statisticDAO.getCoursesWithMoreThan10Students();
+                    ConsoleUtils.printlnData("\n🔥 CÁC KHÓA HỌC CÓ TRÊN 10 HỌC VIÊN:");
+                    List<CourseStatDTO> hotCourses = statisticDAO.getCoursesWithMoreThan10Students();
                     if (hotCourses.isEmpty()) {
-                        System.out.println("ℹ️ Hiện tại chưa có khóa học nào vượt mốc 10 học viên.");
+                        ConsoleUtils.printlnInfo("ℹ️ Hiện tại chưa có khóa học nào vượt mốc 10 học viên.");
                     } else {
                         displayStatTable(hotCourses);
                     }
@@ -219,34 +221,103 @@ public class AdminView {
                 case "5":
                     return;
                 default:
-                    System.out.println("❌ Lựa chọn không hợp lệ!");
+                    ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
             }
         }
     }
 
-    // Hàm in bảng chung cho các báo cáo
     private void displayStatTable(List<CourseStatDTO> stats) {
-        System.out.println("+------------------------------------------+------------------+");
-        System.out.printf("| %-40s | %-16s |\n", "Tên khóa học", "Số lượng Học viên");
-        System.out.println("+------------------------------------------+------------------+");
+        int[] widths = {40, 16};
+        String[] headers = {"Tên khóa học", "Số lượng Học viên"};
+        List<String[]> rows = new ArrayList<>();
         for (CourseStatDTO stat : stats) {
-            System.out.printf("| %-40s | %-16d |\n", stat.getCourseName(), stat.getStudentCount());
+            rows.add(new String[]{stat.getCourseName(), String.valueOf(stat.getStudentCount())});
         }
-        System.out.println("+------------------------------------------+------------------+");
+        ConsoleUtils.printTable(headers, widths, rows);
     }
 
     private void displayCourseTable(List<Course> courses) {
         if (courses.isEmpty()) {
-            System.out.println("ℹ️ Danh sách trống.");
+            ConsoleUtils.printlnInfo("ℹ️ Danh sách trống.");
             return;
         }
-        System.out.println("\n+----+------------------------------------+----------+--------------------+");
-        System.out.printf("| %-2s | %-34s | %-8s | %-18s |\n", "ID", "Tên khóa học", "Số giờ", "Giảng viên");
-        System.out.println("+----+------------------------------------+----------+--------------------+");
+        int[] widths = {2, 34, 8, 18};
+        String[] headers = {"ID", "Tên khóa học", "Số giờ", "Giảng viên"};
+        List<String[]> rows = new ArrayList<>();
         for (Course c : courses) {
-            System.out.printf("| %-2d | %-34s | %-8d | %-18s |\n", c.getId(), c.getName(), c.getDuration(), c.getInstructor());
+            rows.add(new String[]{
+                    String.valueOf(c.getId()),
+                    c.getName(),
+                    String.valueOf(c.getDuration()),
+                    c.getInstructor()
+            });
         }
-        System.out.println("+----+------------------------------------+----------+--------------------+\n");
+        System.out.println();
+        ConsoleUtils.printTable(headers, widths, rows);
+        System.out.println();
+    }
+
+    private void displayPaginatedCourses(String keyword, Scanner scanner) {
+        int currentPage = 1;
+        int pageSize = 5; // Bạn có thể chỉnh sửa số lượng khóa học trên 1 trang ở đây
+
+        while (true) {
+            try {
+                // Gọi Service để lấy tổng số lượng
+                int totalRecords = courseService.getTotalCoursesCount(keyword);
+                if (totalRecords == 0) {
+                    System.out.println("❌ Không tìm thấy khóa học nào phù hợp!");
+                    return;
+                }
+
+                // Tính tổng số trang
+                int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+
+                // Đảm bảo currentPage không bị vượt giới hạn khi dữ liệu thay đổi
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                // Lấy dữ liệu của trang hiện tại
+                List<Course> courses = courseService.getCoursesByPage(keyword, currentPage, pageSize);
+
+                String pageTitle = String.format("DANH SÁCH KHÓA HỌC (Trang %d/%d) - Tổng: %d khóa", currentPage, totalPages, totalRecords);
+                ConsoleUtils.printPageHeader(pageTitle);
+                if (!keyword.isEmpty()) {
+                    ConsoleUtils.printlnData("   🔍 Đang lọc theo từ khóa: [" + keyword + "]");
+                }
+                displayCourseTable(courses);
+                ConsoleUtils.printDivider(73);
+
+                ConsoleUtils.printlnData("Điều hướng: [N] Trang sau | [P] Trang trước | [Số] Nhảy tới trang | [0] Thoát");
+                ConsoleUtils.printPrompt("👉 Nhập lựa chọn: ");
+                String action = scanner.nextLine().trim().toUpperCase();
+
+                if (action.equals("0")) {
+                    break; // Thoát khỏi màn hình phân trang
+                } else if (action.equals("N")) {
+                    if (currentPage < totalPages) currentPage++;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang cuối cùng!");
+                } else if (action.equals("P")) {
+                    if (currentPage > 1) currentPage--;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang đầu tiên!");
+                } else {
+                    // Xử lý nếu người dùng gõ số để nhảy trang trực tiếp
+                    try {
+                        int targetPage = Integer.parseInt(action);
+                        if (targetPage >= 1 && targetPage <= totalPages) {
+                            currentPage = targetPage;
+                        } else {
+                            System.out.println("❌ Trang không tồn tại!");
+                        }
+                    } catch (NumberFormatException e) {
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi truy xuất dữ liệu phân trang: " + e.getMessage());
+                break;
+            }
+        }
     }
 
     private void handleIdInsert(Scanner scanner) {
@@ -441,7 +512,7 @@ public class AdminView {
     }
 
     private void handleIdSearch(Scanner scanner) {
-        System.out.println("\n--- 🔍 TÌM KIẾM KHÓA HỌC ---");
+        System.out.println("\n--- 🔍 TÌM KIẾM KHÓA HỌC (CÓ PHÂN TRANG) ---");
 
         while (true) {
             System.out.print("Nhập từ khóa tên khóa học cần tìm (Hoặc gõ '0' để Quay lại): ");
@@ -452,25 +523,15 @@ public class AdminView {
                 return;
             }
 
-            // LỚP PHÒNG THỦ 1: Chặn tìm kiếm 1 ký tự (Tránh nhiễu dữ liệu)
-            if (keyword.length() < 2) {
-                System.out.println("❌ Lỗi: Vui lòng nhập ít nhất 2 ký tự để tìm kiếm hiệu quả hơn!");
-                continue; // Bỏ qua phần dưới, quay lại đầu vòng lặp bắt nhập lại
+            // Chặn tìm kiếm rỗng
+            if (keyword.isEmpty()) {
+                System.out.println("❌ Lỗi: Từ khóa không được để trống! Vui lòng nhập lại.");
+                continue;
             }
 
-            // LỚP PHÒNG THỦ 2: Gọi Service và xử lý lỗi mượt mà (Không Crash)
-            try {
-                List<entity.Course> results = courseService.searchByName(keyword);
-
-                // Hiển thị kết quả ra bảng
-                displayCourseTable(results);
-
-                break; // Xử lý xong xuôi thì phá vòng lặp để quay về Menu
-
-            } catch (Exception e) {
-                System.out.println("❌ Lỗi hệ thống: Quá trình tìm kiếm gặp sự cố.");
-                break; // Nếu lỗi DB thì thoát vòng lặp trả về Menu, tránh kẹt vĩnh viễn
-            }
+            // Gọi hàm phân trang hiển thị kết quả lọc theo keyword
+            displayPaginatedCourses(keyword, scanner);
+            break; // Hiển thị xong, khi Admin bấm '0' thoát phân trang thì sẽ quay về Menu chính
         }
     }
 
@@ -530,45 +591,94 @@ public class AdminView {
         }
     }
 
-
-    private void displayGroupedEnrollments() {
-        Map<String, List<EnrollmentDetail>> groupedMap = enrollmentService.getEnrollmentsGroupedByCourse();
-        if (groupedMap.isEmpty()) {
-            System.out.println("ℹ️ Không có dữ liệu đăng ký nào trong hệ thống.");
-            return;
+    private void displayEnrollmentTable(List<EnrollmentDetail> enrollments) {
+        int[] widths = {2, 30, 20, 25, 11};
+        String[] headers = {"ID", "Khóa học", "Tên Học viên", "Email", "Trạng thái"};
+        List<String[]> rows = new ArrayList<>();
+        for (EnrollmentDetail e : enrollments) {
+            rows.add(new String[]{
+                    String.valueOf(e.getEnrollmentId()),
+                    e.getCourseName(),
+                    e.getStudentName(),
+                    e.getStudentEmail(),
+                    e.getStatus()
+            });
         }
-        // Duyệt qua từng entry trong Map (Mỗi Key là 1 Tên khóa học, Value là List sinh viên)
-        for (java.util.Map.Entry<String, java.util.List<EnrollmentDetail>> entry : groupedMap.entrySet()) {
-            System.out.println("\n📘 KHÓA HỌC: " + entry.getKey().toUpperCase());
-            System.out.println("+----+----------------------+---------------------------+---------------------+----------+");
-            System.out.printf("| %-2s | %-20s | %-25s | %-19s | %-8s |\n", "ID", "Tên Học viên", "Email", "Thời gian ĐK", "Status");
-            System.out.println("+----+----------------------+---------------------------+---------------------+----------+");
+        ConsoleUtils.printTable(headers, widths, rows);
+    }
 
-            // In danh sách sinh viên thuộc khóa học đó
-            for (EnrollmentDetail e : entry.getValue()) {
-                System.out.printf("| %-2d | %-20s | %-25s | %-19s | %-8s |\n",
-                        e.getEnrollmentId(),
-                        e.getStudentName(),
-                        e.getStudentEmail(),
-                        e.getRegisteredAt().toString().substring(0, 19),
-                        e.getStatus());
+    private void displayPaginatedEnrollments(Scanner scanner) {
+        int currentPage = 1;
+        int pageSize = 5;
+
+        while (true) {
+            try {
+                int totalRecords = enrollmentService.getTotalEnrollmentsCount();
+                if (totalRecords == 0) {
+                    System.out.println("ℹ️ Không có dữ liệu đăng ký nào trong hệ thống.");
+                    return;
+                }
+
+                int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                List<EnrollmentDetail> enrollments = enrollmentService.getEnrollmentsByPage(currentPage, pageSize);
+
+                String pageTitle = String.format("DANH SÁCH ĐƠN ĐĂNG KÝ (Trang %d/%d) - Tổng: %d đơn (Xếp mới nhất lên đầu)", currentPage, totalPages, totalRecords);
+                ConsoleUtils.printPageHeader(pageTitle);
+                displayEnrollmentTable(enrollments);
+
+                ConsoleUtils.printlnData("Điều hướng: [N] Trang sau | [P] Trang trước | [Số] Nhảy tới trang | [0] Thoát");
+                ConsoleUtils.printPrompt("👉 Nhập lựa chọn: ");
+                String action = scanner.nextLine().trim().toUpperCase();
+
+                if (action.equals("0")) break;
+                else if (action.equals("N")) {
+                    if (currentPage < totalPages) currentPage++;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang cuối cùng!");
+                } else if (action.equals("P")) {
+                    if (currentPage > 1) currentPage--;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang đầu tiên!");
+                } else {
+                    try {
+                        int targetPage = Integer.parseInt(action);
+                        if (targetPage >= 1 && targetPage <= totalPages) currentPage = targetPage;
+                        else System.out.println("❌ Trang không tồn tại!");
+                    } catch (NumberFormatException e) {
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi truy xuất dữ liệu phân trang: " + e.getMessage());
+                break;
             }
-            System.out.println("+----+----------------------+---------------------------+---------------------+----------+");
         }
     }
 
     private void handleApproveEnrollment(Scanner scanner) {
         System.out.println("\n--- ✔️ DUYỆT ĐƠN ĐĂNG KÝ KHÓA HỌC ---");
+
+        // BƯỚC ĐỘ UX: Gọi hiển thị danh sách phân trang để Admin nhìn tận mắt các ID đang chờ duyệt
+        displayPaginatedEnrollments(scanner);
+
         int enrollmentId = 0;
 
-        // Vòng lặp validate đầu vào phải là số nguyên
+        // Vòng lặp validate đầu vào phải là số nguyên (Có lối thoát 0)
         while (true) {
-            System.out.print("Nhập ID đơn đăng ký muốn DUYỆT: ");
+            System.out.print("\n👉 Nhập ID đơn đăng ký muốn DUYỆT (Hoặc gõ '0' để Quay lại): ");
+            String input = scanner.nextLine().trim();
+
+            if (input.equals("0")) {
+                System.out.println("ℹ️ Đã hủy thao tác duyệt đơn.");
+                return;
+            }
+
             try {
-                enrollmentId = Integer.parseInt(scanner.nextLine().trim());
+                enrollmentId = Integer.parseInt(input);
                 break;
             } catch (NumberFormatException e) {
-                System.out.println("❌ Lỗi: ID đơn đăng ký phải là một số nguyên!");
+                System.out.println("❌ Lỗi: ID đơn đăng ký phải là một số nguyên! Vui lòng nhập lại.");
             }
         }
 
@@ -577,37 +687,48 @@ public class AdminView {
             enrollmentService.approveEnrollment(enrollmentId);
             System.out.println("✅ Đã duyệt đơn đăng ký có ID [" + enrollmentId + "] thành công!");
         } catch (Exception e) {
-            // Bắt lỗi từ Business ném lên nếu không tìm thấy ID trong DB
-            System.out.println(e.getMessage());
+            // Bắt lỗi từ Business ném lên (ID không tồn tại, hoặc đơn này đã được duyệt từ trước rồi)
+            System.out.println("❌ Lỗi nghiệp vụ: " + e.getMessage());
         }
     }
 
     private void handleRemoveEnrollment(Scanner scanner) {
         System.out.println("\n--- ❌ XÓA SINH VIÊN KHỎI KHÓA HỌC ---");
+
+        // Gọi hiển thị danh sách phân trang trực quan
+        displayPaginatedEnrollments(scanner);
+
         int enrollmentId = 0;
 
-        // Vòng lặp validate đầu vào phải là số nguyên
+        // Vòng lặp validate đầu vào
         while (true) {
-            System.out.print("Nhập ID đơn đăng ký muốn XÓA: ");
+            System.out.print("\n👉 Nhập ID đơn đăng ký muốn XÓA (Hoặc gõ '0' để Quay lại): ");
+            String input = scanner.nextLine().trim();
+
+            if (input.equals("0")) {
+                System.out.println("ℹ️ Đã hủy thao tác xóa đơn.");
+                return;
+            }
+
             try {
-                enrollmentId = Integer.parseInt(scanner.nextLine().trim());
+                enrollmentId = Integer.parseInt(input);
                 break;
             } catch (NumberFormatException e) {
-                System.out.println("❌ Lỗi: ID đơn đăng ký phải là một số nguyên!");
+                System.out.println("❌ Lỗi: ID đơn đăng ký phải là một số nguyên! Vui lòng nhập lại.");
             }
         }
 
-        // Yêu cầu xác nhận trước khi thực hiện lệnh DELETE trong PostgreSQL
-        System.out.print("⚠️ Bạn có chắc chắn muốn xóa sinh viên này khỏi khóa học? (Y/N): ");
+        // Yêu cầu xác nhận kép (Double Confirmation) chống bấm nhầm
+        System.out.print("⚠️ Bạn có chắc chắn muốn xóa đơn đăng ký có ID [" + enrollmentId + "] không? (Y/N): ");
         String confirm = scanner.nextLine().trim();
 
         if ("Y".equalsIgnoreCase(confirm)) {
             try {
-                // Gọi Business xử lý xóa bản ghi
+                // Gọi Business xử lý xóa bản ghi dưới DB
                 enrollmentService.removeEnrollment(enrollmentId);
                 System.out.println("✅ Đã xóa đơn đăng ký có ID [" + enrollmentId + "] khỏi hệ thống!");
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                System.out.println("❌ Lỗi hệ thống: " + e.getMessage());
             }
         } else {
             System.out.println("ℹ️ Đã hủy thao tác xóa đơn đăng ký.");
@@ -619,18 +740,26 @@ public class AdminView {
      */
     private void displayStudentTable(List<Student> students) {
         if (students.isEmpty()) {
-            System.out.println("ℹ️ Danh sách học viên trống.");
+            ConsoleUtils.printlnInfo("ℹ️ Danh sách học viên trống.");
             return;
         }
-        System.out.println("\n+----+----------------------+---------------------------+-------------+------+------------+");
-        System.out.printf("| %-2s | %-20s | %-25s | %-11s | %-4s | %-10s |\n", "ID", "Tên Học viên", "Email", "SĐT", "Phái", "Ngày Sinh");
-        System.out.println("+----+----------------------+---------------------------+-------------+------+------------+");
+        int[] widths = {2, 20, 25, 11, 4, 10};
+        String[] headers = {"ID", "Tên Học viên", "Email", "SĐT", "Phái", "Ngày Sinh"};
+        List<String[]> rows = new ArrayList<>();
         for (Student s : students) {
             String sexStr = s.getSex() == 1 ? "Nam" : "Nữ";
-            System.out.printf("| %-2d | %-20s | %-25s | %-11s | %-4s | %-10s |\n",
-                    s.getId(), s.getName(), s.getEmail(), s.getPhone(), sexStr, s.getDob().toString());
+            rows.add(new String[]{
+                    String.valueOf(s.getId()),
+                    s.getName(),
+                    s.getEmail(),
+                    s.getPhone(),
+                    sexStr,
+                    s.getDob().toString()
+            });
         }
-        System.out.println("+----+----------------------+---------------------------+-------------+------+------------+\n");
+        System.out.println();
+        ConsoleUtils.printTable(headers, widths, rows);
+        System.out.println();
     }
 
     private void handleStudentInsert(Scanner scanner) {
@@ -651,6 +780,59 @@ public class AdminView {
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    private void displayPaginatedStudents(String keyword, Scanner scanner) {
+        int currentPage = 1;
+        int pageSize = 5;
+
+        while (true) {
+            try {
+                int totalRecords = studentService.getTotalStudentsCount(keyword);
+                if (totalRecords == 0) {
+                    System.out.println("❌ Không tìm thấy học viên nào phù hợp!");
+                    return;
+                }
+
+                int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                List<Student> students = studentService.getStudentsByPage(keyword, currentPage, pageSize);
+
+                String pageTitle = String.format("DANH SÁCH HỌC VIÊN (Trang %d/%d) - Tổng: %d học viên", currentPage, totalPages, totalRecords);
+                ConsoleUtils.printPageHeader(pageTitle);
+                if (!keyword.isEmpty()) {
+                    ConsoleUtils.printlnData("   🔍 Đang lọc theo từ khóa: [" + keyword + "]");
+                }
+                displayStudentTable(students);
+                ConsoleUtils.printDivider(90);
+
+                ConsoleUtils.printlnData("Điều hướng: [N] Trang sau | [P] Trang trước | [Số] Nhảy tới trang | [0] Thoát");
+                ConsoleUtils.printPrompt("👉 Nhập lựa chọn: ");
+                String action = scanner.nextLine().trim().toUpperCase();
+
+                if (action.equals("0")) break;
+                else if (action.equals("N")) {
+                    if (currentPage < totalPages) currentPage++;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang cuối cùng!");
+                } else if (action.equals("P")) {
+                    if (currentPage > 1) currentPage--;
+                    else ConsoleUtils.printlnWarning("⚠️ Bạn đang ở trang đầu tiên!");
+                } else {
+                    try {
+                        int targetPage = Integer.parseInt(action);
+                        if (targetPage >= 1 && targetPage <= totalPages) currentPage = targetPage;
+                        else System.out.println("❌ Trang không tồn tại!");
+                    } catch (NumberFormatException e) {
+                        ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ!");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi truy xuất dữ liệu phân trang: " + e.getMessage());
+                break;
+            }
         }
     }
 
@@ -701,19 +883,19 @@ public class AdminView {
                 boolean isValidChoice = true;
                 switch (subChoice) {
                     case "1":
-                        student.setName(utils.InputUtil.getValidName(scanner));
+                        student.setName(InputUtil.getValidName(scanner));
                         break;
                     case "2":
-                        student.setDob(utils.InputUtil.getValidDate(scanner));
+                        student.setDob(InputUtil.getValidDate(scanner));
                         break;
                     case "3":
-                        student.setEmail(utils.InputUtil.getValidEmail(scanner));
+                        student.setEmail(InputUtil.getValidEmail(scanner));
                         break;
                     case "4":
-                        student.setPhone(utils.InputUtil.getValidPhone(scanner));
+                        student.setPhone(InputUtil.getValidPhone(scanner));
                         break;
                     case "5":
-                        student.setSex(utils.InputUtil.getValidSex(scanner));
+                        student.setSex(InputUtil.getValidSex(scanner));
                         break;
                     default:
                         System.out.println("❌ Lựa chọn không hợp lệ! Vui lòng chọn từ 1 đến 5.");
@@ -789,7 +971,7 @@ public class AdminView {
     }
 
     private void handleStudentSearch(Scanner scanner) {
-        System.out.println("\n--- 🔍 TÌM KIẾM ĐA NĂNG (OMNI-SEARCH) ---");
+        System.out.println("\n--- 🔍 TÌM KIẾM ĐA NĂNG (OMNI-SEARCH CÓ PHÂN TRANG) ---");
 
         while (true) {
             System.out.print("Nhập từ khóa (Tên, Email hoặc ID) (Hoặc gõ '0' để Quay lại): ");
@@ -800,28 +982,18 @@ public class AdminView {
                 return;
             }
 
-            // LỚP PHÒNG THỦ 1: Chặn chuỗi rỗng (Chống việc kéo toàn bộ DB lên do LIKE '%%')
+            // LỚP PHÒNG THỦ 1: Chặn chuỗi rỗng (Chống việc kéo toàn bộ DB do LIKE '%%')
             if (keyword.isEmpty()) {
                 System.out.println("❌ Lỗi: Từ khóa tìm kiếm không được để trống! Vui lòng nhập lại.");
-                continue; // Quay lại vòng lặp bắt nhập chữ
+                continue;
             }
 
-            // (Tùy chọn) Có thể giữ luật tối thiểu 2 ký tự, nhưng vì có tìm ID (như ID 1, 2) nên isEmpty là hợp lý nhất ở đây
+            // LỚP PHÒNG THỦ 2: Bàn giao từ khóa sạch cho hàm hiển thị phân trang
+            displayPaginatedStudents(keyword, scanner);
 
-            // LỚP PHÒNG THỦ 2: Hứng lỗi an toàn
-            try {
-                List<entity.Student> results = studentService.searchStudents(keyword);
-
-                // Hiển thị kết quả ra bảng
-                displayStudentTable(results);
-
-                break; // Tìm kiếm và in xong thì phá vòng lặp để quay về Menu
-
-            } catch (Exception e) {
-                System.out.println("❌ Lỗi hệ thống: Quá trình tìm kiếm gặp sự cố.");
-                // System.out.println("Chi tiết: " + e.getMessage());
-                break; // Thoát vòng lặp nếu có lỗi sâu từ DB
-            }
+            // Sau khi Admin thoát khỏi màn hình phân trang (gõ 0),
+            // vòng lặp này phá vỡ để đưa Admin quay về Menu con Quản lý học viên
+            break;
         }
     }
 
@@ -878,6 +1050,69 @@ public class AdminView {
         } catch (Exception e) {
             System.out.println("❌ Lỗi hệ thống: Quá trình sắp xếp gặp sự cố.");
             // System.out.println("Chi tiết lỗi: " + e.getMessage());
+        }
+    }
+
+    private void displayAuditLogTable(List<AuditLog> logs) {
+        int[] widths = {2, 18, 9, 10, 47, 19};
+        String[] headers = {"ID", "Người thực hiện", "Thao tác", "Bảng nguồn", "Chi tiết thay đổi dữ liệu", "Thời gian ghi nhận"};
+        List<String[]> rows = new ArrayList<>();
+        for (AuditLog log : logs) {
+            rows.add(new String[]{
+                    String.valueOf(log.getId()),
+                    log.getActorInfo(),
+                    log.getActionType(),
+                    log.getTargetTable(),
+                    log.getActionDetails(),
+                    log.getCreatedAt().toString().substring(0, 19)
+            });
+        }
+        ConsoleUtils.printTable(headers, widths, rows);
+    }
+
+    /**
+     * TÍNH NĂNG MỚI: XEM NHẬT KÝ HỆ THỐNG (AUDIT TRAIL)
+     */
+    private void handleViewAuditLogs(Scanner scanner) {
+        int currentLimit = 20; // Mặc định hiển thị 20 logs mới nhất
+
+        while (true) {
+            try {
+                // Gọi Service lấy danh sách log gần đây
+                List<AuditLog> logs = auditLogService.getRecentSystemLogs(currentLimit);
+
+                ConsoleUtils.printPageHeader("📬 LỊCH SỬ HOẠT ĐỘNG HỆ THỐNG (Hiển thị " + currentLimit + " log mới nhất)");
+
+                if (logs.isEmpty()) {
+                    ConsoleUtils.printlnInfo("ℹ️ Hệ thống chưa ghi nhận nhật ký nào.");
+                } else {
+                    displayAuditLogTable(logs);
+                }
+
+                // Menu điều khiển cấu hình số lượng hiển thị
+                ConsoleUtils.printlnData("Tùy chọn: [Nhập số lớn hơn 0] Thay đổi số lượng log muốn xem | [0] Quay lại Dashboard");
+                ConsoleUtils.printPrompt("👉 Lựa chọn của bạn: ");
+                String input = scanner.nextLine().trim();
+
+                if (input.equals("0")) {
+                    return; // Thoát hàm quay về Dashboard chính
+                }
+
+                try {
+                    int newLimit = Integer.parseInt(input);
+                    if (newLimit > 0) {
+                        currentLimit = newLimit; // Cập nhật lại số lượng hiển thị để vòng lặp tải lại
+                    } else {
+                        ConsoleUtils.printlnError("❌ Lỗi: Số lượng log muốn xem phải lớn hơn 0!");
+                    }
+                } catch (NumberFormatException e) {
+                    ConsoleUtils.printlnError("❌ Lựa chọn không hợp lệ! Vui lòng nhập số hoặc gõ '0'.");
+                }
+
+            } catch (Exception e) {
+                ConsoleUtils.printlnError("❌ Lỗi truy xuất nhật ký hệ thống: " + e.getMessage());
+                return;
+            }
         }
     }
 }

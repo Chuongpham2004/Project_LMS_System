@@ -3,6 +3,7 @@ package presentation;
 import business.IUserService;
 import business.impl.UserServiceImpl;
 import entity.Student;
+import utils.ConsoleUtils;
 import utils.InputUtil;
 
 import java.sql.Date;
@@ -15,7 +16,7 @@ public class AuthView {
     public void showLogin(Scanner scanner) throws Exception {
         // Bọc toàn bộ luồng đăng nhập vào một vòng lặp lớn
         while (true) {
-            System.out.println("\n--- 🔐 ĐĂNG NHẬP HỆ THỐNG ---");
+            ConsoleUtils.printSubMenuTitle("🔐 ĐĂNG NHẬP HỆ THỐNG");
             String email = "";
             String password = "";
 
@@ -25,7 +26,7 @@ public class AuthView {
                 email = scanner.nextLine().trim();
 
                 if (email.equals("0")) {
-                    System.out.println("ℹ️ Đã hủy đăng nhập.");
+                ConsoleUtils.printlnInfo("ℹ️ Đã hủy đăng nhập.");
                     return; // Thoát hoàn toàn khỏi hàm showLogin, quay về Main Menu
                 }
 
@@ -51,16 +52,16 @@ public class AuthView {
             Student user = userService.login(email, password);
 
             if (user != null) {
-                System.out.println("✅ Đăng nhập thành công! Xin chào " + user.getName());
+                ConsoleUtils.printlnSuccess("✅ Đăng nhập thành công! Xin chào " + user.getName());
 
                 // Điều hướng menu dựa theo Role (Phân quyền)
                 if ("ADMIN".equals(user.getRole())) {
-                    System.out.println("👉 Chuyển hướng tới Menu Quản trị viên (Admin)...");
+                    ConsoleUtils.printlnData("👉 Chuyển hướng tới Menu Quản trị viên (Admin)...");
                     AdminView adminView = new AdminView();
                     adminView.showMenu(scanner);
 
                 } else {
-                    System.out.println("👉 Chuyển hướng tới Menu Học viên (Student)...");
+                    ConsoleUtils.printlnData("👉 Chuyển hướng tới Menu Học viên (Student)...");
                     StudentView studentView = new StudentView(user);
                     studentView.showMenu(scanner);
                 }
@@ -69,14 +70,14 @@ public class AuthView {
                 return;
             } else {
                 // Đăng nhập thất bại: Báo lỗi và vòng lặp while(true) lớn sẽ tự động quay lại bắt nhập Email
-                System.out.println("❌ Tài khoản hoặc mật khẩu không chính xác. Vui lòng thử lại!");
-                System.out.println("-------------------------------------------");
+                ConsoleUtils.printlnError("❌ Tài khoản hoặc mật khẩu không chính xác. Vui lòng thử lại!");
+                ConsoleUtils.printDivider(43);
             }
         }
     }
 
     public void showRegister(Scanner scanner) throws Exception {
-        System.out.println("\n--- 📝 ĐĂNG KÝ TÀI KHOẢN ---");
+        ConsoleUtils.printSubMenuTitle("📝 ĐĂNG KÝ TÀI KHOẢN");
         Student newStudent = new Student();
 
         try {
@@ -90,12 +91,12 @@ public class AuthView {
 
             // Gọi Business để kiểm tra (chống trùng email) và lưu DB + Băm mật khẩu
             userService.register(newStudent);
-            System.out.println("🎉 Đăng ký tài khoản thành công! Bạn có thể tiến hành đăng nhập ngay.");
+            ConsoleUtils.printlnSuccess("🎉 Đăng ký tài khoản thành công! Bạn có thể tiến hành đăng nhập ngay.");
 
         } catch (Exception e) {
             // Bắt các lỗi throw từ tầng Business (như trùng email)
             System.out.println(e.getMessage());
-            System.out.println("⚠️ Đăng ký thất bại. Vui lòng thử lại!");
+            ConsoleUtils.printlnWarning("⚠️ Đăng ký thất bại. Vui lòng thử lại!");
         }
     }
 }
