@@ -227,7 +227,7 @@ public class AdminView {
     }
 
     private void displayStatTable(List<CourseStatDTO> stats) {
-        int[] widths = {40, 16};
+        int[] widths = {40, 20};
         String[] headers = {"Tên khóa học", "Số lượng Học viên"};
         List<String[]> rows = new ArrayList<>();
         for (CourseStatDTO stat : stats) {
@@ -259,7 +259,7 @@ public class AdminView {
 
     private void displayPaginatedCourses(String keyword, Scanner scanner) {
         int currentPage = 1;
-        int pageSize = 5; // Bạn có thể chỉnh sửa số lượng khóa học trên 1 trang ở đây
+        int pageSize = 5;
 
         while (true) {
             try {
@@ -592,8 +592,8 @@ public class AdminView {
     }
 
     private void displayEnrollmentTable(List<EnrollmentDetail> enrollments) {
-        int[] widths = {2, 30, 20, 25, 11};
-        String[] headers = {"ID", "Khóa học", "Tên Học viên", "Email", "Trạng thái"};
+        int[] widths = {4, 28, 18, 24, 19, 10};
+        String[] headers = {"ID", "Khóa học", "Tên Học viên", "Email", "Thời gian ĐK", "Trạng thái"};
         List<String[]> rows = new ArrayList<>();
         for (EnrollmentDetail e : enrollments) {
             rows.add(new String[]{
@@ -601,6 +601,7 @@ public class AdminView {
                     e.getCourseName(),
                     e.getStudentName(),
                     e.getStudentEmail(),
+                    e.getRegisteredAt() != null ? e.getRegisteredAt().toString() : "",
                     e.getStatus()
             });
         }

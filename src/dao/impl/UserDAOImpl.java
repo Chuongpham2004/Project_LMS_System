@@ -60,7 +60,7 @@ public class UserDAOImpl implements IUserDAO {
             if (conn != null) {
                 pstmt = conn.prepareStatement(sql);
                 pstmt.setString(1, student.getName());
-                pstmt.setDate(2, (Date) student.getDob()); // Lưu ý: Ngày sinh phải là java.sql.Date
+                pstmt.setDate(2, (Date) student.getDob());
                 pstmt.setString(3, student.getEmail());
                 pstmt.setInt(4, student.getSex());
                 pstmt.setString(5, student.getPhone());

@@ -221,8 +221,10 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public int getTotalStudentsCount(String keyword) throws Exception {
-        // Tìm kiếm trên cả Tên, Email và ID
-        String sql = "SELECT COUNT(*) FROM student WHERE name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ?";
+        // Phải cùng điều kiện với getStudentsByPage (ngoặc OR + role + is_deleted)
+        String sql = "SELECT COUNT(*) FROM student " +
+                "WHERE (name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ?) " +
+                "AND role = 'STUDENT' AND is_deleted = false";
         try (Connection conn = utils.DBUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -240,10 +242,14 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public List<Student> getStudentsByPage(String keyword, int page, int pageSize) throws Exception {
-        List<entity.Student> students = new ArrayList<>();
+        List<Student> students = new ArrayList<>();
         int offset = (page - 1) * pageSize;
 
-        String sql = "SELECT * FROM student WHERE name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ? ORDER BY id ASC LIMIT ? OFFSET ?";
+        // Bắt buộc ngoặc quanh OR: AND ưu tiên hơn OR nên thiếu ngoặc sẽ lọc sai
+        String sql = "SELECT * FROM student " +
+                "WHERE (name ILIKE ? OR email ILIKE ? OR CAST(id AS VARCHAR) ILIKE ?) " +
+                "AND role = 'STUDENT' AND is_deleted = false " +
+                "ORDER BY id ASC LIMIT ? OFFSET ?";
 
         try (Connection conn = utils.DBUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -257,14 +263,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Student s = new entity.Student();
-                    s.setId(rs.getInt("id"));
-                    s.setName(rs.getString("name"));
-                    s.setEmail(rs.getString("email"));
-                    s.setPhone(rs.getString("phone"));
-                    s.setSex(rs.getInt("sex"));
-                    s.setDob(rs.getDate("dob"));
-                    students.add(s);
+                    students.add(mapResultSetToStudent(rs));
                 }
             }
         }

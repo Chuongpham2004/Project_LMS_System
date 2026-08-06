@@ -239,7 +239,7 @@ public class EnrollmentDAOImpl implements IEnrollmentDAO {
 
     @Override
     public List<EnrollmentDetail> getEnrollmentsByPage(int page, int pageSize) throws Exception {
-        List<entity.EnrollmentDetail> list = new ArrayList<>();
+        List<EnrollmentDetail> list = new ArrayList<>();
         int offset = (page - 1) * pageSize;
 
         // Dùng JOIN để lấy tên khóa học và tên học viên lên cùng một bảng phẳng
@@ -257,12 +257,12 @@ public class EnrollmentDAOImpl implements IEnrollmentDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    entity.EnrollmentDetail ed = new entity.EnrollmentDetail();
+                    EnrollmentDetail ed = new EnrollmentDetail();
                     ed.setEnrollmentId(rs.getInt("id"));
                     ed.setCourseName(rs.getString("course_name"));
                     ed.setStudentName(rs.getString("student_name"));
                     ed.setStudentEmail(rs.getString("email"));
-                    ed.setRegisteredAt(rs.getTimestamp("registered_at")); // Tuỳ kiểu dữ liệu thời gian của bạn
+                    ed.setRegisteredAt(rs.getTimestamp("registered_at"));
                     ed.setStatus(rs.getString("status"));
                     list.add(ed);
                 }

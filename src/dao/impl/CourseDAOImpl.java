@@ -184,8 +184,8 @@ public class CourseDAOImpl implements ICourseDAO {
     }
 
     @Override
-    public List<entity.Course> getCoursesByPage(String keyword, int page, int pageSize) throws Exception {
-        List<entity.Course> courses = new ArrayList<>();
+    public List<Course> getCoursesByPage(String keyword, int page, int pageSize) throws Exception {
+        List<Course> courses = new ArrayList<>();
         int offset = (page - 1) * pageSize;
 
         // Thêm điều kiện ILIKE trước ORDER BY và LIMIT
@@ -200,7 +200,7 @@ public class CourseDAOImpl implements ICourseDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Course course = new entity.Course();
+                    Course course = new Course();
                     course.setId(rs.getInt("id"));
                     course.setName(rs.getString("name"));
                     course.setDuration(rs.getInt("duration"));
